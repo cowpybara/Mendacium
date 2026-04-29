@@ -9,6 +9,7 @@ Este proyecto consiste en el desarrollo de un videojuego móvil de deducción so
 
 El objetivo académico es consolidar los conceptos de la Programación Orientada a Objetos (POO) aplicándolos a un entorno de desarrollo móvil moderno, demostrando cómo estructurar reglas de negocio complejas mediante polimorfismo y encapsulación.
 
+
 2. Reglas Básicas del Juego
 
 Roles Activos: Al inicio de la partida, cada jugador recibe un rol secreto. En esta versión, se implementan cuatro roles fundamentales:
@@ -17,6 +18,7 @@ Roles Activos: Al inicio de la partida, cada jugador recibe un rol secreto. En e
 2. Impostor: Despierta de noche para eliminar a un jugador.
 3. Médico: Despierta de noche para proteger a un jugador (evitando que muera si es atacado por el Impostor).
 5. Vidente: Despierta de noche para investigar a un jugador y descubrir su verdadero rol.
+
 
 Fase de Noche: Los jugadores "duermen" en la interfaz. El sistema cede el turno secuencialmente a los roles con habilidades nocturnas (Impostor, Médico, Vidente) para que ejecuten sus acciones en secreto.
 
@@ -39,6 +41,7 @@ Se itera sobre los jugadores con habilidades activas.
 Se presenta una pantalla a cada rol especial para elegir su objetivo, invocando jugador.rol.realizarAccion(objetivo).
 Resolución Nocturna:
 El motor del juego evalúa el choque de acciones. Si el objetivo del Impostor tiene isProtected == true (por obra del Médico), la muerte se cancela.
+
 
 Fase de Día:
 
