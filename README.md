@@ -57,14 +57,14 @@ Se verifica la condición de victoria. Si nadie ha ganado, se vuelve al paso 3.
 
 Anexos
 
-Vidente
+Vidente:
 https://www.figma.com/design/SaDVhGG7S6G64fDYHYjRJL/Vidente-view?node-id=0-1&t=KvdsS3NL35hPfFT9-1 
 
-Impostor
+Impostor:
 https://www.figma.com/design/PAzgK0WK0ahNdCJCsk6rvD/Importor-view?t=KvdsS3NL35hPfFT9-1
 
-Médico
+Médico:
 https://www.figma.com/design/KhFsSBRLYBdgNO6f4kQFJi/Medico-view?t=KvdsS3NL35hPfFT9-1
 
-Aldeano
+Aldeano:
 https://www.figma.com/design/qIJbyYNRIz5utOg0PycCdl/Aldeano-view?node-id=0-1&t=A7IMUh5Zsk6OmMee-1
