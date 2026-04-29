@@ -10,6 +10,7 @@ Este proyecto consiste en el desarrollo de un videojuego móvil de deducción so
 El objetivo académico es consolidar los conceptos de la Programación Orientada a Objetos (POO) aplicándolos a un entorno de desarrollo móvil moderno, demostrando cómo estructurar reglas de negocio complejas mediante polimorfismo y encapsulación.
 
 2. Reglas Básicas del Juego
+
 Roles Activos: Al inicio de la partida, cada jugador recibe un rol secreto. En esta versión, se implementan cuatro roles fundamentales:
 Aldeano: No tiene habilidades nocturnas. Su objetivo es deducir y votar de día.
 Impostor: Despierta de noche para eliminar a un jugador.
