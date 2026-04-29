@@ -12,25 +12,28 @@ El objetivo académico es consolidar los conceptos de la Programación Orientada
 2. Reglas Básicas del Juego
 
 Roles Activos: Al inicio de la partida, cada jugador recibe un rol secreto. En esta versión, se implementan cuatro roles fundamentales:
-Aldeano: No tiene habilidades nocturnas. Su objetivo es deducir y votar de día.
-Impostor: Despierta de noche para eliminar a un jugador.
-Médico: Despierta de noche para proteger a un jugador (evitando que muera si es atacado por el Impostor).
-Vidente: Despierta de noche para investigar a un jugador y descubrir su verdadero rol.
+
+1. Aldeano: No tiene habilidades nocturnas. Su objetivo es deducir y votar de día.
+2. Impostor: Despierta de noche para eliminar a un jugador.
+3. Médico: Despierta de noche para proteger a un jugador (evitando que muera si es atacado por el Impostor).
+5. Vidente: Despierta de noche para investigar a un jugador y descubrir su verdadero rol.
 
 Fase de Noche: Los jugadores "duermen" en la interfaz. El sistema cede el turno secuencialmente a los roles con habilidades nocturnas (Impostor, Médico, Vidente) para que ejecuten sus acciones en secreto.
+
 Fase de Día: El sistema calcula los resultados de la noche (evaluando ataques y protecciones). Se revela quién fue eliminado (si no fue protegido). Todos los jugadores vivos discuten y votan para "linchar" a un sospechoso.
 
 Condición de Victoria: El bando bueno gana si elimina a todos los impostores. Los impostores ganan si su número iguala o supera al de los jugadores restantes.
-Público Objetivo
-Estudiantes universitarios de Programación Orientada a Objetos 2 y entusiastas del desarrollo Android que deseen comprender cómo estructurar la lógica de un juego interactivo por turnos utilizando principios sólidos de ingeniería de software.
+
 
 
 3. Lógica del Juego (Flujo de Partida)
 
 Lobby: Se registran los nombres. El creador inicia la partida.
+
 Repartición: La clase Partida mezcla internamente los roles requeridos (ej. 1 Impostor, 1 Médico, 1 Vidente, N Aldeanos) y los asigna.
 
 Fase de Noche:
+
 El ViewModel establece el estado en NOCHE.
 Se itera sobre los jugadores con habilidades activas.
 Se presenta una pantalla a cada rol especial para elegir su objetivo, invocando jugador.rol.realizarAccion(objetivo).
@@ -38,10 +41,12 @@ Resolución Nocturna:
 El motor del juego evalúa el choque de acciones. Si el objetivo del Impostor tiene isProtected == true (por obra del Médico), la muerte se cancela.
 
 Fase de Día:
+
 Se limpian los modificadores temporales (isProtected = false).
 Se anuncia el resultado de la noche. Los jugadores debaten.
 
 Votación y Linchamiento:
+
 Los jugadores vivos emiten un voto.
 Se cuenta el mayor número de votos y el jugador seleccionado es eliminado.
 Se verifica la condición de victoria. Si nadie ha ganado, se vuelve al paso 3.
