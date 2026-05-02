@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.mendacium.app-mergeDebugResources-31:/values-v30/values-v30.xml",
+            "outputFile": "com.example.mendacium.app-mergeDebugResources-35:/values-v30/values-v30.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\intim\\.gradle\\caches\\9.3.1\\transforms\\b6fcfcaa80318c897e73a71eba3a616c\\workspace\\transformed\\material3-release\\res\\values-v30\\values-v30.xml",
+                    "source": "C:\\Users\\intim\\.gradle\\caches\\9.3.1\\transforms\\4748cb63beda51461b12a843a75e53f2\\workspace\\transformed\\material3-release\\res\\values-v30\\values-v30.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",

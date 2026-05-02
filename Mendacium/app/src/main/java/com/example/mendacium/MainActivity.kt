@@ -11,6 +11,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.mendacium.ui.navigation.AppNavigation
+import com.example.mendacium.ui.screen.ConfigurationScreen
 import com.example.mendacium.ui.screen.LobbyScreen
 import com.example.mendacium.ui.theme.MendaciumTheme
 
@@ -20,7 +22,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MendaciumTheme {
-                LobbyScreen()
+                //LobbyScreen()
+                AppNavigation()
             }
         }
     }
