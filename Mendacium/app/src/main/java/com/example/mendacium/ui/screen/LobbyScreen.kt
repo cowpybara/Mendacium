@@ -37,13 +37,19 @@ import com.example.mendacium.ui.theme.DarkBackground
 import com.example.mendacium.ui.theme.PurpleAccent
 
 @Composable
-fun LobbyScreen () {
+fun LobbyScreen (
+    totalPlayers: Int,
+    impostors: Int,
+    doctors: Int,
+    seers: Int,
+    onBack: () -> Unit
+) {
     // Lista de prueba
     val players = listOf(
-        Player("Vincenzo", "NIVEL 42 • LISTO", true, IconType.LISTO),
-        Player("Seraphina", "NIVEL 18 • LISTO", false, IconType.NINGUNO),
-        Player("Kaelith", "NIVEL 05 • CONECTANDO", false, IconType.CONECTANDO),
-        Player("Nightshade", "NIVEL 99 • LISTO", false, IconType.ESTRELLA)
+        Player("Mateo", "NIVEL 42 • LISTO", true, IconType.LISTO),
+        Player("Joshua", "NIVEL 18 • LISTO", false, IconType.NINGUNO),
+        Player("Marcos", "NIVEL 05 • CONECTANDO", false, IconType.CONECTANDO),
+        Player("Juan", "NIVEL 99 • LISTO", false, IconType.ESTRELLA)
     )
 
     Scaffold(
