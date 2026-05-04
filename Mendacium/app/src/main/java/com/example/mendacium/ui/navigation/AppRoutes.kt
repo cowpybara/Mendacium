@@ -1,5 +1,6 @@
 package com.example.mendacium.ui.navigation
 
+import androidx.compose.ui.semantics.Role
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -11,4 +12,9 @@ data class LobbyScreenRoute(
     val impostors: Int,
     val doctors: Int,
     val seers: Int
+)
+
+@Serializable
+data class RoleRevealScreenRoute(
+    val roleName: String
 )

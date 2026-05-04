@@ -1,19 +1,15 @@
+# Archivos de entorno y caché
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+.gradle/
+local.properties
+.idea/
 
-# Carpetas de compilación y caché
-/build
-/captures
-.externalNativeBuild
-.cxx
+# Carpetas de compilación (Basura pesada)
+build/
+captures/
+.externalNativeBuild/
+.cxx/
 
-# Archivos del sistema operativo
+# Archivos del sistema
 .DS_Store
 desktop.ini
