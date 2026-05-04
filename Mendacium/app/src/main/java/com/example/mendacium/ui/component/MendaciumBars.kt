@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.HourglassFull
@@ -34,9 +35,20 @@ import com.example.mendacium.ui.theme.PurpleAccent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBarSimple () {
+fun TopBarSimple (onBackClick: (() -> Unit)? = null) {
     TopAppBar(
         title = { Text("Mendacium", color = Color.White) },
+        navigationIcon = {
+            if (onBackClick != null) {
+                IconButton(onClick = { onBackClick() }) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Regresar",
+                        tint = Color.White
+                    )
+                }
+            }
+        },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkBackground)
     )
 }

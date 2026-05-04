@@ -10,8 +10,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.example.mendacium.model.GameConfiguration
+import com.example.mendacium.model.Role
 import com.example.mendacium.ui.screen.ConfigurationScreen
 import com.example.mendacium.ui.screen.LobbyScreen
+import com.example.mendacium.ui.screen.RoleRevealScreen
 
 @Composable
 fun AppNavigation(modifier: Modifier = Modifier) {
@@ -49,14 +51,39 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                 doctors = routeData.doctors,
                 seers = routeData.seers,
                 onBack = {
-                    navController.navigate(ConfigurationScreenRoute) {
-                        popUpTo(LobbyScreenRoute) {
-                            inclusive = true
-                        }
-                    }
+                    navController.popBackStack()
+                },
+                onStartGame = {
+                    // Como prueba, vamos a simular que al iniciar partida a "Mateo" le tocó ser Impostor.
+                    // Accedemos a Role.Impostor.name ("IMPOSTOR") para mandarlo como texto.
+                    navController.navigate(
+                        RoleRevealScreenRoute(
+                            roleName = Role.Impostor.name
+                        )
+                    )
                 }
             )
+        }
 
+        composable<RoleRevealScreenRoute>(
+            enterTransition = { fadeIn() },
+            exitTransition = { fadeOut() }
+        ) { backStackEntry ->
+            val routeData = backStackEntry.toRoute<RoleRevealScreenRoute>()
+
+            val assignedRole = when (routeData.roleName) {
+                "VIDENTE" -> Role.Vidente
+                "IMPOSTOR" -> Role.Impostor
+                "MEDICO" -> Role.Doctor
+                else -> Role.Aldeano
+            }
+            RoleRevealScreen(
+                role = assignedRole,
+                onUnderstand = {
+                    // Logica para mover a la siguiente pantalla
+                }
+
+            )
         }
     }
 }

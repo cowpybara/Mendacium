@@ -1,5 +1,6 @@
 package com.example.mendacium.ui.screen
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,8 +43,12 @@ fun LobbyScreen (
     impostors: Int,
     doctors: Int,
     seers: Int,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onStartGame: () -> Unit
 ) {
+    BackHandler {
+        onBack()
+    }
     // Lista de prueba
     val players = listOf(
         Player("Mateo", "NIVEL 42 • LISTO", true, IconType.LISTO),
@@ -54,8 +59,7 @@ fun LobbyScreen (
 
     Scaffold(
         containerColor = DarkBackground,
-        topBar = { TopBarSimple() },
-        bottomBar = { NavigationBarSimple() }
+        topBar = { TopBarSimple(onBackClick = onBack) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -96,7 +100,7 @@ fun LobbyScreen (
             }
             Spacer(modifier = Modifier.height(16.dp))
             Button(
-                onClick = { /* Logica para inciar */ },
+                onClick = { onStartGame() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -113,6 +117,5 @@ fun LobbyScreen (
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
-
     }
 }

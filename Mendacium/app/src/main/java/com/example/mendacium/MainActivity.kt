@@ -22,7 +22,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MendaciumTheme {
-                //LobbyScreen()
                 AppNavigation()
             }
         }
