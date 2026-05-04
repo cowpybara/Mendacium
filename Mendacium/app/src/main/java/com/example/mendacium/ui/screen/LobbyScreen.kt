@@ -30,32 +30,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mendacium.model.Player
-import com.example.mendacium.model.IconType
-import com.example.mendacium.ui.component.NavigationBarSimple
 import com.example.mendacium.ui.component.PlayerCard
 import com.example.mendacium.ui.component.TopBarSimple
 import com.example.mendacium.ui.theme.DarkBackground
 import com.example.mendacium.ui.theme.PurpleAccent
 
 @Composable
-fun LobbyScreen (
+fun LobbyScreen(
     totalPlayers: Int,
-    impostors: Int,
-    doctors: Int,
-    seers: Int,
+    players: List<Player>,
     onBack: () -> Unit,
     onStartGame: () -> Unit
 ) {
-    BackHandler {
-        onBack()
-    }
-    // Lista de prueba
-    val players = listOf(
-        Player("Mateo", "NIVEL 42 • LISTO", true, IconType.LISTO),
-        Player("Joshua", "NIVEL 18 • LISTO", false, IconType.NINGUNO),
-        Player("Marcos", "NIVEL 05 • CONECTANDO", false, IconType.CONECTANDO),
-        Player("Juan", "NIVEL 99 • LISTO", false, IconType.ESTRELLA)
-    )
+    BackHandler(onBack = onBack)
 
     Scaffold(
         containerColor = DarkBackground,
@@ -83,7 +70,7 @@ fun LobbyScreen (
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Text(
-                    text = "ESPERANDO JUGADORES... (${players.size}/12)",
+                    text = "JUGADORES LISTOS (${players.size}/$totalPlayers)",
                     color = PurpleAccent,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold
@@ -100,12 +87,13 @@ fun LobbyScreen (
             }
             Spacer(modifier = Modifier.height(16.dp))
             Button(
-                onClick = { onStartGame() },
+                onClick = onStartGame,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(PurpleAccent),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                enabled = players.isNotEmpty()
             ) {
                 Icon(
                     Icons.Default.PlayArrow,
@@ -114,7 +102,6 @@ fun LobbyScreen (
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("INICIAR PARTIDA", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }

@@ -3,7 +3,6 @@ package com.example.mendacium.ui.screen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocalHospital
@@ -23,7 +21,6 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -84,7 +81,7 @@ fun ConfigurationScreen(
                     .width(80.dp),
                 thickness = 2.dp
             )
-            // Total Players Card
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -113,23 +110,26 @@ fun ConfigurationScreen(
                 NumericSelector(
                     value = config.totalPlayers,
                     onDecrease = {
-                        if (config.totalPlayers > 4) {
-                            config = config.copy(totalPlayers = config.totalPlayers - 1)
+                        val nextTotalPlayers = config.totalPlayers - 1
+                        if (
+                            nextTotalPlayers >= GameConfiguration.MIN_TOTAL_PLAYERS &&
+                            nextTotalPlayers >= config.impostorCount + config.doctorCount + config.seerCount + 1
+                        ) {
+                            config = config.copy(totalPlayers = nextTotalPlayers)
                         }
                     },
                     onIncrease = {
-                        if (config.totalPlayers < 12) {
+                        if (config.totalPlayers < GameConfiguration.MAX_TOTAL_PLAYERS) {
                             config = config.copy(totalPlayers = config.totalPlayers + 1)
                         }
                     }
                 )
             }
+
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Role Grid Row 1
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                //horizontalArrangement = Arrangement.spacedBy(16.dp)
                 horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally)
             ) {
                 RoleConfigCard(
@@ -138,12 +138,12 @@ fun ConfigurationScreen(
                     icon = Icons.Default.Warning,
                     value = config.impostorCount,
                     onDecrease = {
-                        if (config.impostorCount > 1) {
+                        if (config.impostorCount > GameConfiguration.MIN_IMPOSTOR_COUNT) {
                             config = config.copy(impostorCount = config.impostorCount - 1)
                         }
                     },
                     onIncrease = {
-                        if (config.impostorCount < 12) {
+                        if (config.villagerCount > GameConfiguration.MIN_VILLAGER_COUNT) {
                             config = config.copy(impostorCount = config.impostorCount + 1)
                         }
                     },
@@ -161,7 +161,7 @@ fun ConfigurationScreen(
                         }
                     },
                     onIncrease = {
-                        if (config.doctorCount < 12) {
+                        if (config.villagerCount > GameConfiguration.MIN_VILLAGER_COUNT) {
                             config = config.copy(doctorCount = config.doctorCount + 1)
                         }
                     },
@@ -171,7 +171,6 @@ fun ConfigurationScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            //Role Grid Row 2
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally)
@@ -187,7 +186,7 @@ fun ConfigurationScreen(
                         }
                     },
                     onIncrease = {
-                        if (config.seerCount < 12) {
+                        if (config.villagerCount > GameConfiguration.MIN_VILLAGER_COUNT) {
                             config = config.copy(seerCount = config.seerCount + 1)
                         }
                     }
@@ -196,7 +195,6 @@ fun ConfigurationScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            //Information Note
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(bottom = 16.dp)
@@ -209,20 +207,20 @@ fun ConfigurationScreen(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    "Al menos un jugador será aldeano",
+                    "Aldeanos disponibles: ${config.villagerCount}",
                     color = Color.Gray,
                     fontSize = 12.sp
                 )
             }
 
-            // Primary Button
             Button(
                 onClick = { onNavigateToLobby(config) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = PurpleAccent),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                enabled = config.hasAtLeastOneVillager()
             ) {
                 Text("REPARTIR ROLES", fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }

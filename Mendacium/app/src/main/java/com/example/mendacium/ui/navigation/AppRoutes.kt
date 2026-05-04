@@ -6,17 +6,13 @@ import kotlinx.serialization.Serializable
 object ConfigurationScreenRoute
 
 @Serializable
-data class LobbyScreenRoute(
-    val totalPlayers: Int,
-    val impostors: Int,
-    val doctors: Int,
-    val seers: Int
-)
+object LobbyScreenRoute
 
 @Serializable
-data class RoleRevealScreenRoute(
-    val roleName: String
-)
+object RoleRevealScreenRoute
 
 @Serializable
 object ImpostorNightRoute
+
+@Serializable
+object NightSummaryRoute
