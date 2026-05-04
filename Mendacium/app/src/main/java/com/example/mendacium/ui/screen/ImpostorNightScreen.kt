@@ -1,11 +1,23 @@
 package com.example.mendacium.ui.screen
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -21,12 +33,12 @@ import com.example.mendacium.ui.theme.GreyLavender
 @Composable
 fun ImpostorNightScreen(
     allPlayers: List<Player>,
-    currentImpostorName: String,
+    excludedPlayerNames: Set<String>,
+    attackingSideLabel: String,
     onConfirmAttack: (Player) -> Unit
 ) {
-    // FILTRO: Solo vivos y que no sea el impostor mismo[cite: 1]
-    val validTargets = remember(allPlayers) {
-        allPlayers.filter { it.isAlive && it.name != currentImpostorName }
+    val validTargets = remember(allPlayers, excludedPlayerNames) {
+        allPlayers.filter { it.isAlive && it.name !in excludedPlayerNames }
     }
 
     var selectedTarget by remember { mutableStateOf<Player?>(null) }
@@ -49,7 +61,7 @@ fun ImpostorNightScreen(
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Elige a quién eliminar esta noche",
+                text = "$attackingSideLabel eligen a quien eliminar esta noche",
                 color = GreyLavender,
                 fontSize = 14.sp,
                 modifier = Modifier.padding(bottom = 24.dp)
@@ -62,14 +74,14 @@ fun ImpostorNightScreen(
                 items(validTargets) { victim ->
                     VictimCard(
                         player = victim,
-                        isSelected = (victim.name == selectedTarget?.name),
+                        isSelected = victim.name == selectedTarget?.name,
                         onClick = { selectedTarget = victim }
                     )
                 }
             }
 
             Button(
-                onClick = { selectedTarget?.let { onConfirmAttack(it) } },
+                onClick = { selectedTarget?.let(onConfirmAttack) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
