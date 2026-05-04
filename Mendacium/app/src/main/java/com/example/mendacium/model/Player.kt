@@ -42,5 +42,6 @@ data class Player (
     val levelAndStatus: String,
     val isHost: Boolean = false,
     val iconType: IconType,
-    val role: Role = Role.Aldeano
+    val role: Role = Role.Aldeano,
+    val isAlive: Boolean = true
 )
