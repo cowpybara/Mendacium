@@ -21,6 +21,7 @@ import com.example.mendacium.ui.screen.ImpostorNightScreen
 import com.example.mendacium.ui.screen.LobbyScreen
 import com.example.mendacium.ui.screen.NightSummaryScreen
 import com.example.mendacium.ui.screen.RoleRevealScreen
+import com.example.mendacium.ui.screen.SplashScreen
 
 @Composable
 fun AppNavigation(modifier: Modifier = Modifier) {
@@ -33,9 +34,19 @@ fun AppNavigation(modifier: Modifier = Modifier) {
 
     NavHost(
         navController = navController,
-        startDestination = ConfigurationScreenRoute,
+        startDestination = SplashScreenRoute,
         modifier = modifier
     ) {
+        composable<SplashScreenRoute>(
+            enterTransition = { fadeIn() },
+            exitTransition = { fadeOut() }
+        ) {
+            SplashScreen(
+                onPlayClick = { navController.navigate(ConfigurationScreenRoute) },
+                onJoinClick = {}
+            )
+        }
+
         composable<ConfigurationScreenRoute> {
             ConfigurationScreen(
                 onNavigateToLobby = { config ->
