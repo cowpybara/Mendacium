@@ -3,6 +3,9 @@ package com.example.mendacium.ui.navigation
 import kotlinx.serialization.Serializable
 
 @Serializable
+object SplashScreenRoute
+
+@Serializable
 object ConfigurationScreenRoute
 
 @Serializable
