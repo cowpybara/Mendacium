@@ -50,7 +50,7 @@ import com.example.mendacium.ui.theme.playerAvatarColor
 fun NightSummaryScreen(
     eliminatedPlayerName: String?,
     survivors: List<Player> = emptyList(),
-    onReturnToStart: () -> Unit
+    onContinue: () -> Unit
 ) {
     val wasEliminated = eliminatedPlayerName != null
     val accentColor = if (wasEliminated) ImpostorRed else AliveGreen
@@ -162,14 +162,14 @@ fun NightSummaryScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
-                onClick = onReturnToStart,
+                onClick = onContinue,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = PurpleAccent),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("NUEVA PARTIDA", color = Color.White, fontWeight = FontWeight.Bold)
+                Text("ABRIR DISCUSIÓN", color = Color.White, fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.height(20.dp))
