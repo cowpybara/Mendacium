@@ -19,6 +19,7 @@ import com.example.mendacium.model.Role
 import com.example.mendacium.ui.screen.ConfigurationScreen
 import com.example.mendacium.ui.screen.ImpostorNightScreen
 import com.example.mendacium.ui.screen.LobbyScreen
+import com.example.mendacium.ui.screen.NameEntryScreen
 import com.example.mendacium.ui.screen.NightSummaryScreen
 import com.example.mendacium.ui.screen.RoleRevealScreen
 import com.example.mendacium.ui.screen.SplashScreen
@@ -31,6 +32,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
     var players by remember { mutableStateOf<List<Player>>(emptyList()) }
     var currentRevealIndex by remember { mutableIntStateOf(0) }
     var lastEliminatedPlayerName by remember { mutableStateOf<String?>(null) }
+    var hostPlayerName by remember { mutableStateOf("Jugador 1") }
 
     NavHost(
         navController = navController,
@@ -42,8 +44,23 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             exitTransition = { fadeOut() }
         ) {
             SplashScreen(
-                onPlayClick = { navController.navigate(ConfigurationScreenRoute) },
-                onJoinClick = {}
+                onPlayClick = { navController.navigate(NameEntryScreenRoute) }
+            )
+        }
+
+        composable<NameEntryScreenRoute>(
+            enterTransition = { fadeIn() },
+            exitTransition = { fadeOut() }
+        ) {
+            NameEntryScreen(
+                onJoinWithCode = { name ->
+                    hostPlayerName = name
+                    // TODO: navegar a pantalla de código cuando esté implementada
+                },
+                onCreateGame = { name ->
+                    hostPlayerName = name
+                    navController.navigate(ConfigurationScreenRoute)
+                }
             )
         }
 
@@ -51,7 +68,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             ConfigurationScreen(
                 onNavigateToLobby = { config ->
                     gameConfiguration = config
-                    players = buildLobbyPlayers(config.totalPlayers)
+                    players = buildLobbyPlayers(config.totalPlayers, hostPlayerName)
                     currentRevealIndex = 0
                     lastEliminatedPlayerName = null
                     navController.navigate(LobbyScreenRoute)
@@ -153,14 +170,12 @@ fun AppNavigation(modifier: Modifier = Modifier) {
     }
 }
 
-private fun buildLobbyPlayers(totalPlayers: Int): List<Player> {
+private fun buildLobbyPlayers(totalPlayers: Int, hostName: String = "Jugador 1"): List<Player> {
     return List(totalPlayers) { index ->
         val playerNumber = index + 1
-        val level = (10 + playerNumber * 3).toString().padStart(2, '0')
-
         Player(
-            name = "Jugador $playerNumber",
-            levelAndStatus = "NIVEL $level • LISTO",
+            name = if (index == 0) hostName else "Jugador $playerNumber",
+            levelAndStatus = if (index == 0) "ANFITRIÓN · LISTO" else "LISTO",
             isHost = index == 0,
             iconType = if (index == 0) IconType.ESTRELLA else IconType.LISTO
         )

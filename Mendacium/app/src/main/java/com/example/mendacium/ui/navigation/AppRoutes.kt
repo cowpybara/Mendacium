@@ -6,6 +6,9 @@ import kotlinx.serialization.Serializable
 object SplashScreenRoute
 
 @Serializable
+object NameEntryScreenRoute
+
+@Serializable
 object ConfigurationScreenRoute
 
 @Serializable

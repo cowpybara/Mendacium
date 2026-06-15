@@ -1,16 +1,22 @@
 package com.example.mendacium.ui.component
 
 import android.R
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.HourglassFull
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.VideogameAsset
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,11 +32,16 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.mendacium.ui.theme.CardBackground
+import com.example.mendacium.ui.theme.CardBorder
 import com.example.mendacium.ui.theme.DarkBackground
+import com.example.mendacium.ui.theme.GreyLavender
 import com.example.mendacium.ui.theme.PurpleAccent
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,6 +103,61 @@ fun ConfigurationTopBar() {
                     Icons.Default.Settings,
                     contentDescription = "Configuraciones",
                     tint = PurpleAccent
+                )
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkBackground)
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AccessTopBar() {
+    TopAppBar(
+        navigationIcon = {
+            IconButton(onClick = {}) {
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = null,
+                    tint = Color.White
+                )
+            }
+        },
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "FASE: ACCESO",
+                    color = GreyLavender,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = "Mendacium",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontStyle = FontStyle.Italic
+                )
+            }
+        },
+        actions = {
+            Box(
+                modifier = Modifier
+                    .padding(end = 12.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(CardBackground)
+                    .border(1.dp, CardBorder, RoundedCornerShape(4.dp))
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "SIN CUENTA",
+                    color = GreyLavender,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
                 )
             }
         },
