@@ -112,15 +112,28 @@ fun ConfigurationTopBar() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AccessTopBar() {
+fun AccessTopBar(
+    badge: String = "SIN CUENTA",
+    onBack: (() -> Unit)? = null
+) {
     TopAppBar(
         navigationIcon = {
-            IconButton(onClick = {}) {
-                Icon(
-                    imageVector = Icons.Default.Menu,
-                    contentDescription = null,
-                    tint = Color.White
-                )
+            if (onBack != null) {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Volver",
+                        tint = Color.White
+                    )
+                }
+            } else {
+                IconButton(onClick = {}) {
+                    Icon(
+                        imageVector = Icons.Default.Menu,
+                        contentDescription = null,
+                        tint = Color.White
+                    )
+                }
             }
         },
         title = {
@@ -153,7 +166,7 @@ fun AccessTopBar() {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "SIN CUENTA",
+                    text = badge,
                     color = GreyLavender,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,

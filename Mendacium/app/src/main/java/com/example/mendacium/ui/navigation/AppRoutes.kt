@@ -9,6 +9,9 @@ object SplashScreenRoute
 object NameEntryScreenRoute
 
 @Serializable
+object JoinWithCodeScreenRoute
+
+@Serializable
 object ConfigurationScreenRoute
 
 @Serializable

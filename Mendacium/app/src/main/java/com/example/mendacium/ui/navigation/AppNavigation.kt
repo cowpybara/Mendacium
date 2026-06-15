@@ -18,6 +18,7 @@ import com.example.mendacium.model.Player
 import com.example.mendacium.model.Role
 import com.example.mendacium.ui.screen.ConfigurationScreen
 import com.example.mendacium.ui.screen.ImpostorNightScreen
+import com.example.mendacium.ui.screen.JoinWithCodeScreen
 import com.example.mendacium.ui.screen.LobbyScreen
 import com.example.mendacium.ui.screen.NameEntryScreen
 import com.example.mendacium.ui.screen.NightSummaryScreen
@@ -55,11 +56,24 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             NameEntryScreen(
                 onJoinWithCode = { name ->
                     hostPlayerName = name
-                    // TODO: navegar a pantalla de código cuando esté implementada
+                    navController.navigate(JoinWithCodeScreenRoute)
                 },
                 onCreateGame = { name ->
                     hostPlayerName = name
                     navController.navigate(ConfigurationScreenRoute)
+                }
+            )
+        }
+
+        composable<JoinWithCodeScreenRoute>(
+            enterTransition = { fadeIn() },
+            exitTransition = { fadeOut() }
+        ) {
+            JoinWithCodeScreen(
+                playerName = hostPlayerName,
+                onBack = { navController.popBackStack() },
+                onEnterRoom = { code ->
+                    // TODO: conectar a sala por código cuando haya backend
                 }
             )
         }
