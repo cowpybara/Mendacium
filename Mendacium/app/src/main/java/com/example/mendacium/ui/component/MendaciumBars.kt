@@ -113,6 +113,7 @@ fun ConfigurationTopBar() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccessTopBar(
+    phase: String = "ACCESO",
     badge: String = "SIN CUENTA",
     onBack: (() -> Unit)? = null
 ) {
@@ -139,7 +140,7 @@ fun AccessTopBar(
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "FASE: ACCESO",
+                    text = "FASE: $phase",
                     color = GreyLavender,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
