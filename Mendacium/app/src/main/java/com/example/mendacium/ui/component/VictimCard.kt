@@ -19,6 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mendacium.model.Player
+import com.example.mendacium.ui.theme.AliveGreen
+import com.example.mendacium.ui.theme.CardBackground
 import com.example.mendacium.ui.theme.GreyLavender
 import com.example.mendacium.ui.theme.PurpleAccent
 
@@ -36,7 +38,7 @@ fun VictimCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFF161224))
+            .background(CardBackground)
             .border(
                 width = if (isSelected) 1.5.dp else 0.dp,
                 color = borderColor,
@@ -49,9 +51,9 @@ fun VictimCard(
 
         Box(
             modifier = Modifier
-                .size(12.dp)
+                .size(10.dp)
                 .clip(CircleShape)
-                .background(Color.Green)
+                .background(AliveGreen)
         )
         Spacer(modifier = Modifier.width(16.dp))
 

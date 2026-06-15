@@ -34,6 +34,7 @@ import com.example.mendacium.ui.component.PlayerCard
 import com.example.mendacium.ui.component.TopBarSimple
 import com.example.mendacium.ui.theme.DarkBackground
 import com.example.mendacium.ui.theme.PurpleAccent
+import com.example.mendacium.ui.theme.PurpleSurface
 
 @Composable
 fun LobbyScreen(
@@ -66,11 +67,11 @@ fun LobbyScreen(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
-                    .background(Color(0xFF2A1546))
+                    .background(PurpleSurface)
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Text(
-                    text = "JUGADORES LISTOS (${players.size}/$totalPlayers)",
+                    text = "ESPERANDO JUGADORES... (${players.size}/$totalPlayers)",
                     color = PurpleAccent,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold

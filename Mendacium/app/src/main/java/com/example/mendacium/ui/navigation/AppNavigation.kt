@@ -22,6 +22,7 @@ import com.example.mendacium.ui.screen.JoinWithCodeScreen
 import com.example.mendacium.ui.screen.LobbyScreen
 import com.example.mendacium.ui.screen.NameEntryScreen
 import com.example.mendacium.ui.screen.NightSummaryScreen
+import com.example.mendacium.ui.screen.PassDeviceScreen
 import com.example.mendacium.ui.screen.RoleRevealScreen
 import com.example.mendacium.ui.screen.SplashScreen
 
@@ -104,9 +105,24 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                 onStartGame = {
                     players = assignRoles(players, gameConfiguration)
                     currentRevealIndex = 0
-                    navController.navigate(RoleRevealScreenRoute)
+                    navController.navigate(PassDeviceScreenRoute)
                 }
             )
+        }
+
+        composable<PassDeviceScreenRoute>(
+            enterTransition = { fadeIn() },
+            exitTransition = { fadeOut() }
+        ) {
+            val currentPlayer = players.getOrNull(currentRevealIndex)
+            if (currentPlayer != null) {
+                PassDeviceScreen(
+                    playerName = currentPlayer.name,
+                    turnNumber = currentRevealIndex + 1,
+                    totalPlayers = players.size,
+                    onContinue = { navController.navigate(RoleRevealScreenRoute) }
+                )
+            }
         }
 
         composable<RoleRevealScreenRoute>(
@@ -122,6 +138,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                     onUnderstand = {
                         if (currentRevealIndex < players.lastIndex) {
                             currentRevealIndex += 1
+                            navController.navigate(PassDeviceScreenRoute)
                         } else {
                             navController.navigate(ImpostorNightRoute)
                         }
@@ -151,11 +168,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                 onConfirmAttack = { victim ->
                     lastEliminatedPlayerName = victim.name
                     players = players.map { player ->
-                        if (player.name == victim.name) {
-                            player.copy(isAlive = false)
-                        } else {
-                            player
-                        }
+                        if (player.name == victim.name) player.copy(isAlive = false) else player
                     }
                     navController.navigate(NightSummaryRoute)
                 }
@@ -168,6 +181,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         ) {
             NightSummaryScreen(
                 eliminatedPlayerName = lastEliminatedPlayerName,
+                survivors = players,
                 onReturnToStart = {
                     gameConfiguration = GameConfiguration()
                     players = emptyList()
@@ -191,7 +205,8 @@ private fun buildLobbyPlayers(totalPlayers: Int, hostName: String = "Jugador 1")
             name = if (index == 0) hostName else "Jugador $playerNumber",
             levelAndStatus = if (index == 0) "ANFITRIÓN · LISTO" else "LISTO",
             isHost = index == 0,
-            iconType = if (index == 0) IconType.ESTRELLA else IconType.LISTO
+            iconType = if (index == 0) IconType.ESTRELLA else IconType.LISTO,
+            avatarColorIndex = index
         )
     }
 }
@@ -199,29 +214,16 @@ private fun buildLobbyPlayers(totalPlayers: Int, hostName: String = "Jugador 1")
 private fun assignRoles(players: List<Player>, configuration: GameConfiguration): List<Player> {
     val roles = mutableListOf<Role>()
 
-    repeat(configuration.impostorCount) {
-        roles.add(Role.Impostor)
-    }
-
-    repeat(configuration.doctorCount) {
-        roles.add(Role.Doctor)
-    }
-
-    repeat(configuration.seerCount) {
-        roles.add(Role.Vidente)
-    }
+    repeat(configuration.impostorCount) { roles.add(Role.Impostor) }
+    repeat(configuration.doctorCount) { roles.add(Role.Doctor) }
+    repeat(configuration.seerCount) { roles.add(Role.Vidente) }
 
     val villagerCount = configuration.totalPlayers - roles.size
-    repeat(villagerCount) {
-        roles.add(Role.Aldeano)
-    }
+    repeat(villagerCount) { roles.add(Role.Aldeano) }
 
     val shuffledRoles = roles.shuffled()
 
     return players.mapIndexed { index, player ->
-        player.copy(
-            role = shuffledRoles[index],
-            isAlive = true
-        )
+        player.copy(role = shuffledRoles[index], isAlive = true)
     }
 }

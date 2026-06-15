@@ -18,6 +18,9 @@ object ConfigurationScreenRoute
 object LobbyScreenRoute
 
 @Serializable
+object PassDeviceScreenRoute
+
+@Serializable
 object RoleRevealScreenRoute
 
 @Serializable

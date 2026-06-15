@@ -1,11 +1,11 @@
 package com.example.mendacium.ui.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -26,44 +26,54 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.mendacium.model.Player
 import com.example.mendacium.model.IconType
+import com.example.mendacium.model.Player
+import com.example.mendacium.ui.theme.CardBackground
 import com.example.mendacium.ui.theme.GreyLavender
+import com.example.mendacium.ui.theme.OnBackgroundMuted
 import com.example.mendacium.ui.theme.PurpleAccent
+import com.example.mendacium.ui.theme.playerAvatarColor
 
 @Composable
-fun PlayerCard (player: Player) {
+fun PlayerCard(player: Player) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFF161224))
+            .background(CardBackground)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Avatar y etiqueta anfitrion
-        Box(modifier = Modifier.size(56.dp)) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0xFF2C283B))
+        val avatarColor = playerAvatarColor(player.avatarColorIndex)
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(avatarColor.copy(alpha = 0.15f))
+                .border(1.dp, avatarColor.copy(alpha = 0.4f), RoundedCornerShape(8.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = player.name.first().uppercaseChar().toString(),
+                color = avatarColor,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
             )
-
             if (player.isHost) {
                 Text(
-                    text = "ANFITRION",
+                    text = "★",
                     color = Color(0xFF0D0B14),
-                    fontSize = 8.sp,
+                    fontSize = 6.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier
-                        .background(Color(0xFFA855F7), RoundedCornerShape(topStart = 8.dp, bottomEnd = 4.dp))
-                        .padding(horizontal = 4.dp, vertical = 2.dp)
                         .align(Alignment.TopStart)
+                        .background(avatarColor, RoundedCornerShape(topStart = 8.dp, bottomEnd = 4.dp))
+                        .padding(horizontal = 3.dp, vertical = 1.dp)
                 )
             }
         }
-        Spacer(modifier = Modifier.width(16.dp))
+
+        Spacer(modifier = Modifier.width(12.dp))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -74,7 +84,7 @@ fun PlayerCard (player: Player) {
             )
             Text(
                 text = player.levelAndStatus,
-                color = Color(0xFFA09DB0),
+                color = OnBackgroundMuted,
                 fontSize = 12.sp
             )
         }
