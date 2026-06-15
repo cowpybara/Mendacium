@@ -17,6 +17,8 @@ import com.example.mendacium.model.IconType
 import com.example.mendacium.model.Player
 import com.example.mendacium.model.Role
 import com.example.mendacium.ui.screen.ConfigurationScreen
+import com.example.mendacium.ui.screen.DiscussionScreen
+import com.example.mendacium.ui.screen.DoctorNightScreen
 import com.example.mendacium.ui.screen.ImpostorNightScreen
 import com.example.mendacium.ui.screen.JoinWithCodeScreen
 import com.example.mendacium.ui.screen.LobbyScreen
@@ -24,23 +26,42 @@ import com.example.mendacium.ui.screen.NameEntryScreen
 import com.example.mendacium.ui.screen.NightSummaryScreen
 import com.example.mendacium.ui.screen.PassDeviceScreen
 import com.example.mendacium.ui.screen.RoleRevealScreen
+import com.example.mendacium.ui.screen.SeerNightScreen
+import com.example.mendacium.ui.screen.SeerRevealScreen
 import com.example.mendacium.ui.screen.SplashScreen
+import com.example.mendacium.ui.screen.VerdictScreen
+import com.example.mendacium.ui.screen.VillagerSleepScreen
+import com.example.mendacium.ui.screen.VotingScreen
 
 @Composable
 fun AppNavigation(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
 
+    // Configuración y jugadores
     var gameConfiguration by remember { mutableStateOf(GameConfiguration()) }
     var players by remember { mutableStateOf<List<Player>>(emptyList()) }
-    var currentRevealIndex by remember { mutableIntStateOf(0) }
-    var lastEliminatedPlayerName by remember { mutableStateOf<String?>(null) }
     var hostPlayerName by remember { mutableStateOf("Jugador 1") }
+
+    // Fase de revelación de roles
+    var currentRevealIndex by remember { mutableIntStateOf(0) }
+
+    // Estado de la noche
+    var dayNumber by remember { mutableIntStateOf(1) }
+    var nightVictimName by remember { mutableStateOf<String?>(null) }
+    var doctorProtectedName by remember { mutableStateOf<String?>(null) }
+    var seerTarget by remember { mutableStateOf<Player?>(null) }
+    var actualEliminatedName by remember { mutableStateOf<String?>(null) }
+
+    // Estado del día
+    var dayEliminatedPlayer by remember { mutableStateOf<Player?>(null) }
 
     NavHost(
         navController = navController,
         startDestination = SplashScreenRoute,
         modifier = modifier
     ) {
+        // ── ACCESO ──────────────────────────────────────────────────────────────
+
         composable<SplashScreenRoute>(
             enterTransition = { fadeIn() },
             exitTransition = { fadeOut() }
@@ -73,9 +94,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             JoinWithCodeScreen(
                 playerName = hostPlayerName,
                 onBack = { navController.popBackStack() },
-                onEnterRoom = { code ->
-                    // TODO: conectar a sala por código cuando haya backend
-                }
+                onEnterRoom = { /* TODO: backend */ }
             )
         }
 
@@ -85,11 +104,12 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                     gameConfiguration = config
                     players = buildLobbyPlayers(config.totalPlayers, hostPlayerName)
                     currentRevealIndex = 0
-                    lastEliminatedPlayerName = null
                     navController.navigate(LobbyScreenRoute)
                 }
             )
         }
+
+        // ── LOBBY ───────────────────────────────────────────────────────────────
 
         composable<LobbyScreenRoute>(
             enterTransition = { fadeIn() },
@@ -110,11 +130,14 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             )
         }
 
+        // ── REVELACIÓN DE ROLES ─────────────────────────────────────────────────
+
         composable<PassDeviceScreenRoute>(
             enterTransition = { fadeIn() },
             exitTransition = { fadeOut() }
         ) {
-            val currentPlayer = players.getOrNull(currentRevealIndex)
+            // remember sin clave: captura el jugador al entrar y no reacciona a cambios
+            val currentPlayer = remember { players.getOrNull(currentRevealIndex) }
             if (currentPlayer != null) {
                 PassDeviceScreen(
                     playerName = currentPlayer.name,
@@ -129,8 +152,9 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             enterTransition = { fadeIn() },
             exitTransition = { fadeOut() }
         ) {
-            val currentPlayer = players.getOrNull(currentRevealIndex)
-
+            // remember sin clave: congela el jugador al entrar; evita mostrar el
+            // siguiente rol durante la animación de salida al incrementar el índice
+            val currentPlayer = remember { players.getOrNull(currentRevealIndex) }
             if (currentPlayer != null) {
                 RoleRevealScreen(
                     playerName = currentPlayer.name,
@@ -140,11 +164,23 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                             currentRevealIndex += 1
                             navController.navigate(PassDeviceScreenRoute)
                         } else {
-                            navController.navigate(ImpostorNightRoute)
+                            navController.navigate(VillagerSleepRoute)
                         }
                     }
                 )
             }
+        }
+
+        // ── FASE DE NOCHE ────────────────────────────────────────────────────────
+
+        composable<VillagerSleepRoute>(
+            enterTransition = { fadeIn() },
+            exitTransition = { fadeOut() }
+        ) {
+            VillagerSleepScreen(
+                dayNumber = dayNumber,
+                onStartNight = { navController.navigate(ImpostorNightRoute) }
+            )
         }
 
         composable<ImpostorNightRoute>(
@@ -166,13 +202,95 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                 excludedPlayerNames = impostorNames,
                 attackingSideLabel = attackingSideLabel,
                 onConfirmAttack = { victim ->
-                    lastEliminatedPlayerName = victim.name
-                    players = players.map { player ->
-                        if (player.name == victim.name) player.copy(isAlive = false) else player
+                    nightVictimName = victim.name
+                    val doctor = players.firstOrNull { it.isAlive && it.role == Role.Doctor }
+                    if (doctor != null) {
+                        navController.navigate(DoctorNightRoute)
+                    } else {
+                        // Médico muerto: saltar directamente al Vidente o resolver noche
+                        val seer = players.firstOrNull { it.isAlive && it.role == Role.Vidente }
+                        if (seer != null) {
+                            navController.navigate(SeerNightRoute)
+                        } else {
+                            resolveNight(
+                                victim.name, null,
+                                players,
+                                onPlayersUpdated = { updatedPlayers, eliminated ->
+                                    players = updatedPlayers
+                                    actualEliminatedName = eliminated
+                                }
+                            )
+                            navController.navigate(NightSummaryRoute)
+                        }
                     }
-                    navController.navigate(NightSummaryRoute)
                 }
             )
+        }
+
+        composable<DoctorNightRoute>(
+            enterTransition = { fadeIn() },
+            exitTransition = { fadeOut() }
+        ) {
+            DoctorNightScreen(
+                allPlayers = players,
+                onConfirmProtection = { protected ->
+                    doctorProtectedName = protected.name
+                    val seer = players.firstOrNull { it.isAlive && it.role == Role.Vidente }
+                    if (seer != null) {
+                        navController.navigate(SeerNightRoute)
+                    } else {
+                        resolveNight(
+                            nightVictimName, doctorProtectedName,
+                            players,
+                            onPlayersUpdated = { updatedPlayers, eliminated ->
+                                players = updatedPlayers
+                                actualEliminatedName = eliminated
+                            }
+                        )
+                        navController.navigate(NightSummaryRoute)
+                    }
+                }
+            )
+        }
+
+        composable<SeerNightRoute>(
+            enterTransition = { fadeIn() },
+            exitTransition = { fadeOut() }
+        ) {
+            val seer = players.firstOrNull { it.isAlive && it.role == Role.Vidente }
+            if (seer != null) {
+                SeerNightScreen(
+                    allPlayers = players,
+                    seerName = seer.name,
+                    onConfirmInvestigation = { target ->
+                        seerTarget = target
+                        navController.navigate(SeerRevealRoute)
+                    }
+                )
+            }
+        }
+
+        composable<SeerRevealRoute>(
+            enterTransition = { fadeIn() },
+            exitTransition = { fadeOut() }
+        ) {
+            val target = seerTarget
+            if (target != null) {
+                SeerRevealScreen(
+                    investigatedPlayer = target,
+                    onContinue = {
+                        resolveNight(
+                            nightVictimName, doctorProtectedName,
+                            players,
+                            onPlayersUpdated = { updatedPlayers, eliminated ->
+                                players = updatedPlayers
+                                actualEliminatedName = eliminated
+                            }
+                        )
+                        navController.navigate(NightSummaryRoute)
+                    }
+                )
+            }
         }
 
         composable<NightSummaryRoute>(
@@ -180,22 +298,110 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             exitTransition = { fadeOut() }
         ) {
             NightSummaryScreen(
-                eliminatedPlayerName = lastEliminatedPlayerName,
+                eliminatedPlayerName = actualEliminatedName,
                 survivors = players,
-                onReturnToStart = {
+                onContinue = {
+                    navController.navigate(DiscussionRoute)
+                }
+            )
+        }
+
+        // ── FASE DE DÍA ──────────────────────────────────────────────────────────
+
+        composable<DiscussionRoute>(
+            enterTransition = { fadeIn() },
+            exitTransition = { fadeOut() }
+        ) {
+            DiscussionScreen(
+                players = players,
+                dayNumber = dayNumber,
+                onProceedToVoting = { navController.navigate(VotingRoute) }
+            )
+        }
+
+        composable<VotingRoute>(
+            enterTransition = { fadeIn() },
+            exitTransition = { fadeOut() }
+        ) {
+            VotingScreen(
+                players = players,
+                dayNumber = dayNumber,
+                eliminatedNight = actualEliminatedName,
+                onConfirmVote = { voted ->
+                    dayEliminatedPlayer = voted
+                    if (voted != null) {
+                        players = players.map { p ->
+                            if (p.name == voted.name) p.copy(isAlive = false) else p
+                        }
+                    }
+                    navController.navigate(VerdictRoute)
+                }
+            )
+        }
+
+        composable<VerdictRoute>(
+            enterTransition = { fadeIn() },
+            exitTransition = { fadeOut() }
+        ) {
+            val aliveImpostors = players.count { it.isAlive && it.role == Role.Impostor }
+            val aliveTown = players.count { it.isAlive && it.role != Role.Impostor }
+            val isGameOver = aliveImpostors == 0 || aliveImpostors >= aliveTown
+
+            VerdictScreen(
+                eliminatedPlayer = dayEliminatedPlayer,
+                allPlayers = players,
+                dayNumber = dayNumber,
+                isGameOver = isGameOver,
+                townsfolkWon = aliveImpostors == 0,
+                onNextNight = {
+                    // Limpiar estado nocturno y avanzar día
+                    dayNumber += 1
+                    nightVictimName = null
+                    doctorProtectedName = null
+                    seerTarget = null
+                    actualEliminatedName = null
+                    dayEliminatedPlayer = null
+                    navController.navigate(VillagerSleepRoute)
+                },
+                onNewGame = {
+                    // Reset completo
                     gameConfiguration = GameConfiguration()
                     players = emptyList()
                     currentRevealIndex = 0
-                    lastEliminatedPlayerName = null
+                    dayNumber = 1
+                    nightVictimName = null
+                    doctorProtectedName = null
+                    seerTarget = null
+                    actualEliminatedName = null
+                    dayEliminatedPlayer = null
                     navController.navigate(ConfigurationScreenRoute) {
-                        popUpTo(navController.graph.startDestinationId) {
-                            inclusive = true
-                        }
+                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
                     }
                 }
             )
         }
     }
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+private fun resolveNight(
+    nightVictimName: String?,
+    doctorProtectedName: String?,
+    players: List<Player>,
+    onPlayersUpdated: (List<Player>, String?) -> Unit
+) {
+    val actualEliminated = when {
+        nightVictimName == null -> null
+        nightVictimName == doctorProtectedName -> null
+        else -> nightVictimName
+    }
+    val updatedPlayers = if (actualEliminated != null) {
+        players.map { if (it.name == actualEliminated) it.copy(isAlive = false) else it }
+    } else {
+        players
+    }
+    onPlayersUpdated(updatedPlayers, actualEliminated)
 }
 
 private fun buildLobbyPlayers(totalPlayers: Int, hostName: String = "Jugador 1"): List<Player> {
@@ -213,16 +419,12 @@ private fun buildLobbyPlayers(totalPlayers: Int, hostName: String = "Jugador 1")
 
 private fun assignRoles(players: List<Player>, configuration: GameConfiguration): List<Player> {
     val roles = mutableListOf<Role>()
-
     repeat(configuration.impostorCount) { roles.add(Role.Impostor) }
     repeat(configuration.doctorCount) { roles.add(Role.Doctor) }
     repeat(configuration.seerCount) { roles.add(Role.Vidente) }
-
     val villagerCount = configuration.totalPlayers - roles.size
     repeat(villagerCount) { roles.add(Role.Aldeano) }
-
     val shuffledRoles = roles.shuffled()
-
     return players.mapIndexed { index, player ->
         player.copy(role = shuffledRoles[index], isAlive = true)
     }

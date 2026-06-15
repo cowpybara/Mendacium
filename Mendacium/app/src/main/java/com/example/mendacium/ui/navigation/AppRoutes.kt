@@ -23,8 +23,31 @@ object PassDeviceScreenRoute
 @Serializable
 object RoleRevealScreenRoute
 
+// Fase de noche
+@Serializable
+object VillagerSleepRoute
+
 @Serializable
 object ImpostorNightRoute
 
 @Serializable
+object DoctorNightRoute
+
+@Serializable
+object SeerNightRoute
+
+@Serializable
+object SeerRevealRoute
+
+@Serializable
 object NightSummaryRoute
+
+// Fase de día
+@Serializable
+object DiscussionRoute
+
+@Serializable
+object VotingRoute
+
+@Serializable
+object VerdictRoute
