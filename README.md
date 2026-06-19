@@ -68,3 +68,6 @@ https://www.figma.com/design/KhFsSBRLYBdgNO6f4kQFJi/Medico-view?t=KvdsS3NL35hPfF
 
 Aldeano:
 https://www.figma.com/design/qIJbyYNRIz5utOg0PycCdl/Aldeano-view?node-id=0-1&t=A7IMUh5Zsk6OmMee-1
+
+Lobo:
+https://www.figma.com/design/ehL5MKlCbFbOs7UegVMt8K/Untitled?node-id=1-3&t=1kpP4jionRFB1kdd-1
