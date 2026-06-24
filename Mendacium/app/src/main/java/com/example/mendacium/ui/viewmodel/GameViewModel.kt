@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-
 enum class GamePhase {
     LOBBY,
     IMPOSTOR_NIGHT,
@@ -37,7 +36,6 @@ class GameViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(GameState())
     val uiState: StateFlow<GameState> = _uiState.asStateFlow()
 
-
     fun iniciarPartida(initialPlayers: List<Player>) {
         _uiState.update { currentState ->
             currentState.copy(
@@ -53,11 +51,11 @@ class GameViewModel : ViewModel() {
     }
 
     fun registrarAccionImpostor(victimName: String?) {
-        _uiState.update { it.copy(impostorVictim = victimName, currentPhase = GamePhase.DOCTOR_NIGHT) }
+        _uiState.update { it.copy(impostorVictim = victimName) }
     }
 
     fun registrarAccionMedico(protectedName: String?) {
-        _uiState.update { it.copy(doctorProtected = protectedName, currentPhase = GamePhase.SEER_NIGHT) }
+        _uiState.update { it.copy(doctorProtected = protectedName) }
     }
 
     fun registrarAccionVidente(investigatedName: String?) {
@@ -88,5 +86,25 @@ class GameViewModel : ViewModel() {
 
     fun cambiarFase(newPhase: GamePhase) {
         _uiState.update { it.copy(currentPhase = newPhase) }
+    }
+
+    fun registrarVotacionDia(linchadoName: String) {
+        _uiState.update { currentState ->
+            val updatedPlayers = currentState.players.map {
+                if (it.name == linchadoName) it.copy(isAlive = false) else it
+            }
+
+            val currentWinner = MotorResolucion.evaluarVictoria(updatedPlayers)
+
+            currentState.copy(
+                players = updatedPlayers,
+                winner = currentWinner,
+                currentPhase = if (currentWinner != BandoGanador.NINGUNO) GamePhase.GAME_OVER else GamePhase.VERDICT
+            )
+        }
+    }
+
+    fun limpiarPartida() {
+        _uiState.value = GameState()
     }
 }
