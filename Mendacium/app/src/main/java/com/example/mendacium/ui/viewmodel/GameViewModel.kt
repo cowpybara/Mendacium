@@ -5,8 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.mendacium.model.BandoGanador
 import com.example.mendacium.model.MotorResolucion
 import com.example.mendacium.model.Player
-import com.example.mendacium.network.ApiClient
-import com.example.mendacium.network.dto.SalaDto
+import com.example.mendacium.ui.model.Sala
+import com.example.mendacium.ui.service.ApiResult
+import com.example.mendacium.ui.service.ServiceLocator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,7 +29,7 @@ enum class GamePhase {
 data class NetworkState(
     val cargando: Boolean = false,
     val error: String? = null,
-    val sala: SalaDto? = null
+    val sala: Sala? = null
 )
 
 data class GameState(
@@ -49,15 +50,19 @@ class GameViewModel : ViewModel() {
     private val _networkState = MutableStateFlow(NetworkState())
     val networkState: StateFlow<NetworkState> = _networkState.asStateFlow()
 
+    private val repository = ServiceLocator.salaRepository
+
     fun crearSala(hostNombre: String, onExito: (codigo: String) -> Unit) {
         viewModelScope.launch {
             _networkState.value = NetworkState(cargando = true)
-            try {
-                val sala = ApiClient.api.crearSala(mapOf("hostNombre" to hostNombre))
-                _networkState.value = NetworkState(sala = sala)
-                onExito(sala.codigo)
-            } catch (e: Exception) {
-                _networkState.value = NetworkState(error = "No se pudo crear la sala: ${e.message}")
+            when (val result = repository.crearSala(hostNombre)) {
+                is ApiResult.Success -> {
+                    _networkState.value = NetworkState(sala = result.data)
+                    onExito(result.data.codigo)
+                }
+                is ApiResult.Error -> {
+                    _networkState.value = NetworkState(error = result.message)
+                }
             }
         }
     }
@@ -65,23 +70,24 @@ class GameViewModel : ViewModel() {
     fun unirseASala(codigo: String, nombre: String, onExito: () -> Unit) {
         viewModelScope.launch {
             _networkState.value = NetworkState(cargando = true)
-            try {
-                ApiClient.api.unirse(codigo, mapOf("nombre" to nombre))
-                val sala = ApiClient.api.obtenerSala(codigo)
-                _networkState.value = NetworkState(sala = sala)
-                onExito()
-            } catch (e: Exception) {
-                _networkState.value = NetworkState(error = "Código inválido o sala no disponible")
+            when (val result = repository.unirseASala(codigo, nombre)) {
+                is ApiResult.Success -> {
+                    _networkState.value = NetworkState(sala = result.data)
+                    onExito()
+                }
+                is ApiResult.Error -> {
+                    _networkState.value = NetworkState(error = result.message)
+                }
             }
         }
     }
 
     fun actualizarSala(codigo: String) {
         viewModelScope.launch {
-            try {
-                val sala = ApiClient.api.obtenerSala(codigo)
-                _networkState.update { it.copy(sala = sala) }
-            } catch (_: Exception) {}
+            when (val result = repository.obtenerSala(codigo)) {
+                is ApiResult.Success -> _networkState.update { it.copy(sala = result.data) }
+                is ApiResult.Error -> {}
+            }
         }
     }
 
