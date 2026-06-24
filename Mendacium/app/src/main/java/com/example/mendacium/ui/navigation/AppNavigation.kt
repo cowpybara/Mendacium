@@ -3,6 +3,7 @@ package com.example.mendacium.ui.navigation
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -10,12 +11,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.example.mendacium.model.IconType
+import kotlinx.coroutines.delay
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.mendacium.model.GameConfiguration
-import com.example.mendacium.model.IconType
 import com.example.mendacium.model.Player
 import com.example.mendacium.model.Role
 import com.example.mendacium.ui.screen.ConfigurationScreen
@@ -43,6 +45,7 @@ fun AppNavigation(
 ) {
     val navController = rememberNavController()
     val gameState by viewModel.uiState.collectAsState()
+    val networkState by viewModel.networkState.collectAsState()
 
 
     var gameConfiguration by remember { mutableStateOf(GameConfiguration()) }
@@ -77,6 +80,7 @@ fun AppNavigation(
                 },
                 onCreateGame = { name ->
                     hostPlayerName = name
+                    viewModel.crearSala(name) {}
                     navController.navigate(ConfigurationScreenRoute)
                 }
             )
@@ -86,7 +90,11 @@ fun AppNavigation(
             JoinWithCodeScreen(
                 playerName = hostPlayerName,
                 onBack = { navController.popBackStack() },
-                onEnterRoom = { /* TODO: backend */ }
+                onEnterRoom = { codigo ->
+                    viewModel.unirseASala(codigo, hostPlayerName) {
+                        navController.navigate(LobbyScreenRoute)
+                    }
+                }
             )
         }
 
@@ -103,17 +111,45 @@ fun AppNavigation(
 
         // lobby
         composable<LobbyScreenRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
+            val codigoSala = networkState.sala?.codigo
+
+            // Polling: actualiza la lista de jugadores desde el backend cada 3 segundos
+            LaunchedEffect(codigoSala) {
+                if (codigoSala != null) {
+                    while (true) {
+                        delay(3000)
+                        viewModel.actualizarSala(codigoSala)
+                    }
+                }
+            }
+
+            // Convierte los jugadores del backend al modelo local para mostrarlos
+            val backendPlayers = networkState.sala?.jugadores?.mapIndexed { index, j ->
+                Player(
+                    name = j.nombre,
+                    levelAndStatus = if (j.esHost) "ANFITRIÓN · LISTO" else "LISTO",
+                    isHost = j.esHost,
+                    iconType = if (j.esHost) IconType.ESTRELLA else IconType.LISTO,
+                    avatarColorIndex = index % 12
+                )
+            } ?: emptyList()
+
+            val displayPlayers = if (backendPlayers.isNotEmpty()) backendPlayers else activePlayers
+            val displayTotal = if (backendPlayers.isNotEmpty()) backendPlayers.size else gameConfiguration.totalPlayers
+
             LobbyScreen(
-                totalPlayers = gameConfiguration.totalPlayers,
-                players = activePlayers,
+                totalPlayers = displayTotal,
+                players = displayPlayers,
+                roomCode = codigoSala,
                 onBack = {
                     preGamePlayers = emptyList()
                     viewModel.limpiarPartida()
                     navController.popBackStack()
                 },
                 onStartGame = {
-                    val assignedPlayers = assignRoles(preGamePlayers, gameConfiguration)
-                    viewModel.iniciarPartida(assignedPlayers) // <-- LE PASAMOS EL MANDO AL CEREBRO
+                    val playersToAssign = if (backendPlayers.isNotEmpty()) backendPlayers else preGamePlayers
+                    val assignedPlayers = assignRoles(playersToAssign, gameConfiguration)
+                    viewModel.iniciarPartida(assignedPlayers)
                     currentRevealIndex = 0
                     navController.navigate(PassDeviceScreenRoute)
                 }

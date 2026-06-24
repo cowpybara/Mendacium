@@ -2,9 +2,11 @@ package com.example.mendacium.ui.screen
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,11 +29,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mendacium.model.Player
 import com.example.mendacium.ui.component.PlayerCard
 import com.example.mendacium.ui.component.TopBarSimple
+import com.example.mendacium.ui.theme.CardBackground
+import com.example.mendacium.ui.theme.CardBorder
 import com.example.mendacium.ui.theme.DarkBackground
 import com.example.mendacium.ui.theme.PurpleAccent
 import com.example.mendacium.ui.theme.PurpleSurface
@@ -40,6 +45,7 @@ import com.example.mendacium.ui.theme.PurpleSurface
 fun LobbyScreen(
     totalPlayers: Int,
     players: List<Player>,
+    roomCode: String? = null,
     onBack: () -> Unit,
     onStartGame: () -> Unit
 ) {
@@ -64,6 +70,35 @@ fun LobbyScreen(
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(12.dp))
+            if (roomCode != null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(CardBackground)
+                        .border(1.dp, PurpleAccent.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
+                        .padding(vertical = 12.dp, horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "CÓDIGO DE SALA",
+                        color = PurpleAccent,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.5.sp
+                    )
+                    Text(
+                        text = roomCode,
+                        color = Color.White,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 4.sp,
+                        textAlign = TextAlign.End
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))

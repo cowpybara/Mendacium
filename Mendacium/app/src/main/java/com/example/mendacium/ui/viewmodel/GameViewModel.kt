@@ -1,13 +1,17 @@
 package com.example.mendacium.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.mendacium.model.BandoGanador
 import com.example.mendacium.model.MotorResolucion
 import com.example.mendacium.model.Player
+import com.example.mendacium.network.ApiClient
+import com.example.mendacium.network.dto.SalaDto
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 enum class GamePhase {
     LOBBY,
@@ -20,6 +24,12 @@ enum class GamePhase {
     VERDICT,
     GAME_OVER
 }
+
+data class NetworkState(
+    val cargando: Boolean = false,
+    val error: String? = null,
+    val sala: SalaDto? = null
+)
 
 data class GameState(
     val players: List<Player> = emptyList(),
@@ -35,6 +45,49 @@ class GameViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(GameState())
     val uiState: StateFlow<GameState> = _uiState.asStateFlow()
+
+    private val _networkState = MutableStateFlow(NetworkState())
+    val networkState: StateFlow<NetworkState> = _networkState.asStateFlow()
+
+    fun crearSala(hostNombre: String, onExito: (codigo: String) -> Unit) {
+        viewModelScope.launch {
+            _networkState.value = NetworkState(cargando = true)
+            try {
+                val sala = ApiClient.api.crearSala(mapOf("hostNombre" to hostNombre))
+                _networkState.value = NetworkState(sala = sala)
+                onExito(sala.codigo)
+            } catch (e: Exception) {
+                _networkState.value = NetworkState(error = "No se pudo crear la sala: ${e.message}")
+            }
+        }
+    }
+
+    fun unirseASala(codigo: String, nombre: String, onExito: () -> Unit) {
+        viewModelScope.launch {
+            _networkState.value = NetworkState(cargando = true)
+            try {
+                ApiClient.api.unirse(codigo, mapOf("nombre" to nombre))
+                val sala = ApiClient.api.obtenerSala(codigo)
+                _networkState.value = NetworkState(sala = sala)
+                onExito()
+            } catch (e: Exception) {
+                _networkState.value = NetworkState(error = "Código inválido o sala no disponible")
+            }
+        }
+    }
+
+    fun actualizarSala(codigo: String) {
+        viewModelScope.launch {
+            try {
+                val sala = ApiClient.api.obtenerSala(codigo)
+                _networkState.update { it.copy(sala = sala) }
+            } catch (_: Exception) {}
+        }
+    }
+
+    fun limpiarErrorRed() {
+        _networkState.update { it.copy(error = null) }
+    }
 
     fun iniciarPartida(initialPlayers: List<Player>) {
         _uiState.update { currentState ->
