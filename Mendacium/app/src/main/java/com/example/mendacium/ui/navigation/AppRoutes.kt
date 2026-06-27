@@ -23,12 +23,19 @@ object PassDeviceScreenRoute
 @Serializable
 object RoleRevealScreenRoute
 
-// Fase de noche
+//fase de noche
 @Serializable
 object VillagerSleepRoute
 
 @Serializable
 object ImpostorNightRoute
+
+//pantallas de transición nocturna (pasan el telefono entre roles sin revelar quien es quien)
+@Serializable
+object DoctorTransitionRoute
+
+@Serializable
+object SeerTransitionRoute
 
 @Serializable
 object DoctorNightRoute
@@ -42,7 +49,7 @@ object SeerRevealRoute
 @Serializable
 object NightSummaryRoute
 
-// Fase de día
+//fase de dia
 @Serializable
 object DiscussionRoute
 
