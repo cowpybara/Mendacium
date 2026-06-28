@@ -6,6 +6,9 @@ import kotlinx.serialization.Serializable
 object SplashScreenRoute
 
 @Serializable
+object ModeSelectionRoute
+
+@Serializable
 object NameEntryScreenRoute
 
 @Serializable
@@ -45,6 +48,10 @@ object DoctorNightRoute
 
 @Serializable
 object SeerNightRoute
+
+// modo en línea: pantalla de espera nocturna (aldeanos y roles que ya actuaron)
+@Serializable
+object WaitingNightRoute
 
 @Serializable
 object SeerRevealRoute

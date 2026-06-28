@@ -71,6 +71,7 @@ private const val MAX_NAME_LENGTH = 12
 
 @Composable
 fun NameEntryScreen(
+    mostrarUnirse: Boolean = true,
     onJoinWithCode: (playerName: String) -> Unit,
     onCreateGame: (playerName: String) -> Unit
 ) {
@@ -234,35 +235,37 @@ fun NameEntryScreen(
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            Button(
-                onClick = {
-                    focusManager.clearFocus()
-                    onJoinWithCode(name.trim())
-                },
-                enabled = isNameValid,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = PurpleAccent,
-                    disabledContainerColor = PurpleAccent.copy(alpha = 0.35f)
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Groups,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "UNIRSE CON CÓDIGO",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
-                )
-            }
+            if (mostrarUnirse) {
+                Button(
+                    onClick = {
+                        focusManager.clearFocus()
+                        onJoinWithCode(name.trim())
+                    },
+                    enabled = isNameValid,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PurpleAccent,
+                        disabledContainerColor = PurpleAccent.copy(alpha = 0.35f)
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Groups,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "UNIRSE CON CÓDIGO",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
+                    )
+                }
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
             OutlinedButton(
                 onClick = {

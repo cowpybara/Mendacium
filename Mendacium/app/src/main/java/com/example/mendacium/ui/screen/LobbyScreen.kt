@@ -46,6 +46,7 @@ fun LobbyScreen(
     totalPlayers: Int,
     players: List<Player>,
     roomCode: String? = null,
+    showStartButton: Boolean = true,
     onBack: () -> Unit,
     onStartGame: () -> Unit
 ) {
@@ -122,22 +123,31 @@ fun LobbyScreen(
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = onStartGame,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                colors = ButtonDefaults.buttonColors(PurpleAccent),
-                shape = RoundedCornerShape(12.dp),
-                enabled = players.isNotEmpty()
-            ) {
-                Icon(
-                    Icons.Default.PlayArrow,
-                    contentDescription = null,
-                    tint = Color.White
+            if (showStartButton) {
+                Button(
+                    onClick = onStartGame,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(PurpleAccent),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = players.isNotEmpty()
+                ) {
+                    Icon(
+                        Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        tint = Color.White
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("INICIAR PARTIDA", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
+            } else {
+                Text(
+                    text = "Esperando a que el anfitrión inicie...",
+                    color = PurpleAccent,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("INICIAR PARTIDA", fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
         }
     }

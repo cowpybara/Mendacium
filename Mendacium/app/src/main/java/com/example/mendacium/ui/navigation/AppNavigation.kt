@@ -34,8 +34,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mendacium.model.BandoGanador
+import com.example.mendacium.model.GameMode
 import com.example.mendacium.model.IconType
-import kotlinx.coroutines.delay
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -50,6 +50,7 @@ import com.example.mendacium.ui.screen.DoctorNightScreen
 import com.example.mendacium.ui.screen.ImpostorNightScreen
 import com.example.mendacium.ui.screen.JoinWithCodeScreen
 import com.example.mendacium.ui.screen.LobbyScreen
+import com.example.mendacium.ui.screen.ModeSelectionScreen
 import com.example.mendacium.ui.screen.NameEntryScreen
 import com.example.mendacium.ui.screen.NightSummaryScreen
 import com.example.mendacium.ui.screen.PassDeviceScreen
@@ -60,11 +61,11 @@ import com.example.mendacium.ui.screen.SplashScreen
 import com.example.mendacium.ui.screen.VerdictScreen
 import com.example.mendacium.ui.screen.VillagerSleepScreen
 import com.example.mendacium.ui.screen.VotingScreen
-import com.example.mendacium.ui.theme.DarkBackground
+import com.example.mendacium.ui.screen.WaitingNightScreen
 import com.example.mendacium.ui.theme.NightSurface
 import com.example.mendacium.ui.theme.OnBackgroundMuted
 import com.example.mendacium.ui.theme.PurpleAccent
-import com.example.mendacium.ui.theme.PurpleSurface
+import com.example.mendacium.ui.viewmodel.GamePhase
 import com.example.mendacium.ui.viewmodel.GameViewModel
 
 @Composable
@@ -76,6 +77,7 @@ fun AppNavigation(
     val gameState by viewModel.uiState.collectAsState()
     val networkState by viewModel.networkState.collectAsState()
 
+    var gameMode by remember { mutableStateOf(GameMode.LOCAL) }
     var gameConfiguration by remember { mutableStateOf(GameConfiguration()) }
     var preGamePlayers by remember { mutableStateOf<List<Player>>(emptyList()) }
     var hostPlayerName by remember { mutableStateOf("Jugador 1") }
@@ -88,24 +90,58 @@ fun AppNavigation(
 
     val activePlayers = if (gameState.players.isNotEmpty()) gameState.players else preGamePlayers
 
+    // ─── Navegación reactiva: SOLO en modo en línea, dirigida por el servidor ───
+    LaunchedEffect(gameState.currentPhase, gameMode) {
+        if (gameMode != GameMode.ONLINE) return@LaunchedEffect
+        when (gameState.currentPhase) {
+            GamePhase.ROLE_REVEAL -> navController.navigate(RoleRevealScreenRoute) { launchSingleTop = true }
+            GamePhase.IMPOSTOR_NIGHT -> navController.navigate(ImpostorNightRoute) { launchSingleTop = true }
+            GamePhase.DOCTOR_NIGHT -> navController.navigate(DoctorNightRoute) { launchSingleTop = true }
+            GamePhase.SEER_NIGHT -> navController.navigate(SeerNightRoute) { launchSingleTop = true }
+            GamePhase.SEER_REVEAL -> navController.navigate(SeerRevealRoute) { launchSingleTop = true }
+            GamePhase.NIGHT_WAITING -> navController.navigate(WaitingNightRoute) { launchSingleTop = true }
+            GamePhase.NIGHT_SUMMARY -> navController.navigate(NightSummaryRoute) { launchSingleTop = true }
+            GamePhase.DAY_DISCUSSION -> navController.navigate(DiscussionRoute) { launchSingleTop = true }
+            GamePhase.DAY_VOTING -> navController.navigate(VotingRoute) { launchSingleTop = true }
+            GamePhase.VERDICT, GamePhase.GAME_OVER -> navController.navigate(VerdictRoute) { launchSingleTop = true }
+            else -> {}
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = SplashScreenRoute,
         modifier = modifier
     ) {
         composable<SplashScreenRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
-            SplashScreen(onPlayClick = { navController.navigate(NameEntryScreenRoute) })
+            SplashScreen(onPlayClick = { navController.navigate(ModeSelectionRoute) })
+        }
+
+        composable<ModeSelectionRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
+            ModeSelectionScreen(
+                onSelectLocal = {
+                    gameMode = GameMode.LOCAL
+                    navController.navigate(NameEntryScreenRoute)
+                },
+                onSelectOnline = {
+                    gameMode = GameMode.ONLINE
+                    navController.navigate(NameEntryScreenRoute)
+                }
+            )
         }
 
         composable<NameEntryScreenRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
             NameEntryScreen(
+                mostrarUnirse = gameMode == GameMode.ONLINE,
                 onJoinWithCode = { name ->
                     hostPlayerName = name
                     navController.navigate(JoinWithCodeScreenRoute)
                 },
                 onCreateGame = { name ->
                     hostPlayerName = name
-                    viewModel.crearSala(name) {}
+                    if (gameMode == GameMode.ONLINE) {
+                        viewModel.crearSala(name) {}
+                    }
                     navController.navigate(ConfigurationScreenRoute)
                 }
             )
@@ -127,7 +163,9 @@ fun AppNavigation(
             ConfigurationScreen(
                 onNavigateToLobby = { config ->
                     gameConfiguration = config
-                    preGamePlayers = buildLobbyPlayers(config.totalPlayers, hostPlayerName)
+                    if (gameMode == GameMode.LOCAL) {
+                        preGamePlayers = buildLobbyPlayers(config.totalPlayers, hostPlayerName)
+                    }
                     currentRevealIndex = 0
                     navController.navigate(LobbyScreenRoute)
                 }
@@ -138,11 +176,11 @@ fun AppNavigation(
         composable<LobbyScreenRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
             val codigoSala = networkState.sala?.codigo
 
-            LaunchedEffect(codigoSala) {
-                if (codigoSala != null) {
-                    while (true) {
-                        delay(3000)
-                        viewModel.actualizarSala(codigoSala)
+            if (gameMode == GameMode.ONLINE) {
+                // Conecta el WebSocket (reemplaza el polling) cuando ya hay código
+                LaunchedEffect(codigoSala) {
+                    if (codigoSala != null) {
+                        viewModel.iniciarConexionWebSocket(codigoSala, gameState.miNombre)
                     }
                 }
             }
@@ -163,23 +201,33 @@ fun AppNavigation(
             LobbyScreen(
                 totalPlayers = displayTotal,
                 players = displayPlayers,
-                roomCode = codigoSala,
+                roomCode = if (gameMode == GameMode.ONLINE) codigoSala else null,
+                showStartButton = gameMode == GameMode.LOCAL || gameState.soyHost,
                 onBack = {
                     preGamePlayers = emptyList()
                     viewModel.limpiarPartida()
                     navController.popBackStack()
                 },
                 onStartGame = {
-                    val playersToAssign = if (backendPlayers.isNotEmpty()) backendPlayers else preGamePlayers
-                    val assignedPlayers = assignRoles(playersToAssign, gameConfiguration)
-                    viewModel.iniciarPartida(assignedPlayers)
-                    currentRevealIndex = 0
-                    navController.navigate(PassDeviceScreenRoute)
+                    if (gameMode == GameMode.LOCAL) {
+                        val assignedPlayers = assignRoles(preGamePlayers, gameConfiguration)
+                        viewModel.iniciarPartida(assignedPlayers)
+                        currentRevealIndex = 0
+                        navController.navigate(PassDeviceScreenRoute)
+                    } else {
+                        // El host envía la configuración; el servidor reparte los roles
+                        // y la navegación reactiva lleva a cada quien a su pantalla.
+                        viewModel.hostIniciarPartida(
+                            gameConfiguration.impostorCount,
+                            gameConfiguration.doctorCount,
+                            gameConfiguration.seerCount
+                        )
+                    }
                 }
             )
         }
 
-        //revelacion de roled
+        //revelacion de rol
         composable<PassDeviceScreenRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
             val currentPlayer = remember { activePlayers.getOrNull(currentRevealIndex) }
             if (currentPlayer != null) {
@@ -193,24 +241,32 @@ fun AppNavigation(
         }
 
         composable<RoleRevealScreenRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
-            val currentPlayer = remember { activePlayers.getOrNull(currentRevealIndex) }
-            if (currentPlayer != null) {
-                RoleRevealScreen(
-                    playerName = currentPlayer.name,
-                    role = currentPlayer.role,
-                    onUnderstand = {
-                        if (currentRevealIndex < activePlayers.lastIndex) {
-                            currentRevealIndex += 1
-                            navController.navigate(PassDeviceScreenRoute)
-                        } else {
-                            navController.navigate(VillagerSleepRoute)
+            if (gameMode == GameMode.LOCAL) {
+                val currentPlayer = remember { activePlayers.getOrNull(currentRevealIndex) }
+                if (currentPlayer != null) {
+                    RoleRevealScreen(
+                        playerName = currentPlayer.name,
+                        role = currentPlayer.role,
+                        onUnderstand = {
+                            if (currentRevealIndex < activePlayers.lastIndex) {
+                                currentRevealIndex += 1
+                                navController.navigate(PassDeviceScreenRoute)
+                            } else {
+                                navController.navigate(VillagerSleepRoute)
+                            }
                         }
-                    }
+                    )
+                }
+            } else {
+                RoleRevealScreen(
+                    playerName = gameState.miNombre,
+                    role = gameState.miRol,
+                    onUnderstand = { viewModel.confirmarRolVisto() }
                 )
             }
         }
 
-        //fase de noche
+        //fase de noche (LOCAL)
         composable<VillagerSleepRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
             VillagerSleepScreen(
                 dayNumber = dayNumber,
@@ -222,7 +278,7 @@ fun AppNavigation(
             )
         }
 
-        //transicion nocturna
+        //transiciones nocturnas (LOCAL)
         composable<ImpostorTransitionRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) { backStackEntry ->
             val route = backStackEntry.toRoute<ImpostorTransitionRoute>()
             NightRoleTransitionScreen(
@@ -232,38 +288,48 @@ fun AppNavigation(
         }
 
         composable<ImpostorNightRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
-            val impostorNames = activePlayers
-                .filter { it.role == Role.Impostor }
-                .mapTo(mutableSetOf()) { it.name }
+            if (gameMode == GameMode.LOCAL) {
+                val impostorNames = activePlayers
+                    .filter { it.role == Role.Impostor }
+                    .mapTo(mutableSetOf()) { it.name }
 
-            val attackingSideLabel = if (impostorNames.size == 1) impostorNames.first() else "Los impostores"
+                val attackingSideLabel = if (impostorNames.size == 1) impostorNames.first() else "Los impostores"
 
-            ImpostorNightScreen(
-                allPlayers = activePlayers,
-                excludedPlayerNames = impostorNames,
-                attackingSideLabel = attackingSideLabel,
-                onConfirmAttack = { victim ->
-                    viewModel.registrarAccionImpostor(victim.name)
+                ImpostorNightScreen(
+                    allPlayers = activePlayers,
+                    excludedPlayerNames = impostorNames,
+                    attackingSideLabel = attackingSideLabel,
+                    onConfirmAttack = { victim ->
+                        viewModel.registrarAccionImpostor(victim.name)
 
-                    val doctor = activePlayers.firstOrNull { it.isAlive && it.role == Role.Doctor }
-                    if (doctor != null) {
-                        // transición con el NOMBRE del jugador, no el rol
-                        navController.navigate(DoctorTransitionRoute(doctor.name))
-                    } else {
-                        viewModel.registrarAccionMedico(null)
-                        val seer = activePlayers.firstOrNull { it.isAlive && it.role == Role.Vidente }
-                        if (seer != null) {
-                            navController.navigate(SeerTransitionRoute(seer.name))
+                        val doctor = activePlayers.firstOrNull { it.isAlive && it.role == Role.Doctor }
+                        if (doctor != null) {
+                            navController.navigate(DoctorTransitionRoute(doctor.name))
                         } else {
-                            viewModel.registrarAccionVidente(null)
-                            navController.navigate(NightSummaryRoute)
+                            viewModel.registrarAccionMedico(null)
+                            val seer = activePlayers.firstOrNull { it.isAlive && it.role == Role.Vidente }
+                            if (seer != null) {
+                                navController.navigate(SeerTransitionRoute(seer.name))
+                            } else {
+                                viewModel.registrarAccionVidente(null)
+                                navController.navigate(NightSummaryRoute)
+                            }
                         }
                     }
-                }
-            )
+                )
+            } else {
+                // ONLINE: solo el impostor ve esta pantalla; envía su ataque por WebSocket
+                val excluidos = (gameState.aliados + gameState.miNombre).toSet()
+                val etiqueta = if (gameState.aliados.isEmpty()) gameState.miNombre else "Los impostores"
+                ImpostorNightScreen(
+                    allPlayers = activePlayers,
+                    excludedPlayerNames = excluidos,
+                    attackingSideLabel = etiqueta,
+                    onConfirmAttack = { victim -> viewModel.enviarAtaqueImpostor(victim.name) }
+                )
+            }
         }
 
-        //transición nocturna
         composable<DoctorTransitionRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) { backStackEntry ->
             val route = backStackEntry.toRoute<DoctorTransitionRoute>()
             NightRoleTransitionScreen(
@@ -273,24 +339,29 @@ fun AppNavigation(
         }
 
         composable<DoctorNightRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
-            DoctorNightScreen(
-                allPlayers = activePlayers,
-                onConfirmProtection = { protected ->
-                    viewModel.registrarAccionMedico(protected.name)
+            if (gameMode == GameMode.LOCAL) {
+                DoctorNightScreen(
+                    allPlayers = activePlayers,
+                    onConfirmProtection = { protected ->
+                        viewModel.registrarAccionMedico(protected.name)
 
-                    val seer = activePlayers.firstOrNull { it.isAlive && it.role == Role.Vidente }
-                    if (seer != null) {
-                        // transición con el NOMBRE del jugador, no el rol
-                        navController.navigate(SeerTransitionRoute(seer.name))
-                    } else {
-                        viewModel.registrarAccionVidente(null)
-                        navController.navigate(NightSummaryRoute)
+                        val seer = activePlayers.firstOrNull { it.isAlive && it.role == Role.Vidente }
+                        if (seer != null) {
+                            navController.navigate(SeerTransitionRoute(seer.name))
+                        } else {
+                            viewModel.registrarAccionVidente(null)
+                            navController.navigate(NightSummaryRoute)
+                        }
                     }
-                }
-            )
+                )
+            } else {
+                DoctorNightScreen(
+                    allPlayers = activePlayers,
+                    onConfirmProtection = { protected -> viewModel.enviarProteccion(protected.name) }
+                )
+            }
         }
 
-        //transicion nocturna
         composable<SeerTransitionRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) { backStackEntry ->
             val route = backStackEntry.toRoute<SeerTransitionRoute>()
             NightRoleTransitionScreen(
@@ -300,30 +371,60 @@ fun AppNavigation(
         }
 
         composable<SeerNightRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
-            val seer = activePlayers.firstOrNull { it.isAlive && it.role == Role.Vidente }
-            if (seer != null) {
+            if (gameMode == GameMode.LOCAL) {
+                val seer = activePlayers.firstOrNull { it.isAlive && it.role == Role.Vidente }
+                if (seer != null) {
+                    SeerNightScreen(
+                        allPlayers = activePlayers,
+                        seerName = seer.name,
+                        onConfirmInvestigation = { target ->
+                            seerTarget = target
+                            navController.navigate(SeerRevealRoute)
+                        }
+                    )
+                }
+            } else {
                 SeerNightScreen(
                     allPlayers = activePlayers,
-                    seerName = seer.name,
-                    onConfirmInvestigation = { target ->
-                        seerTarget = target
-                        navController.navigate(SeerRevealRoute)
-                    }
+                    seerName = gameState.miNombre,
+                    onConfirmInvestigation = { target -> viewModel.enviarInvestigacion(target.name) }
                 )
             }
         }
 
         composable<SeerRevealRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
-            val target = seerTarget
-            if (target != null) {
-                SeerRevealScreen(
-                    investigatedPlayer = target,
-                    onContinue = {
-                        viewModel.registrarAccionVidente(target.name)
-                        navController.navigate(NightSummaryRoute)
-                    }
-                )
+            if (gameMode == GameMode.LOCAL) {
+                val target = seerTarget
+                if (target != null) {
+                    SeerRevealScreen(
+                        investigatedPlayer = target,
+                        onContinue = {
+                            viewModel.registrarAccionVidente(target.name)
+                            navController.navigate(NightSummaryRoute)
+                        }
+                    )
+                }
+            } else {
+                val nombre = gameState.seerInvestigated
+                val esMalo = gameState.seerRevealEsMalo
+                if (nombre != null && esMalo != null) {
+                    val investigado = Player(
+                        name = nombre,
+                        levelAndStatus = "",
+                        iconType = IconType.NINGUNO,
+                        role = if (esMalo) Role.Impostor else Role.Aldeano
+                    )
+                    SeerRevealScreen(
+                        investigatedPlayer = investigado,
+                        onContinue = { viewModel.cambiarFase(GamePhase.NIGHT_WAITING) }
+                    )
+                }
             }
+        }
+
+        //online: pantalla de espera nocturna
+        composable<WaitingNightRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
+            WaitingNightScreen()
         }
 
         composable<NightSummaryRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
@@ -332,12 +433,17 @@ fun AppNavigation(
                 survivors = gameState.players,
                 isGameOver = gameState.winner != BandoGanador.NINGUNO,
                 onContinue = {
-                    if (gameState.winner != BandoGanador.NINGUNO) {
-                        navController.navigate(VerdictRoute) {
-                            popUpTo(NightSummaryRoute) { inclusive = true }
+                    if (gameMode == GameMode.LOCAL) {
+                        if (gameState.winner != BandoGanador.NINGUNO) {
+                            navController.navigate(VerdictRoute) {
+                                popUpTo(NightSummaryRoute) { inclusive = true }
+                            }
+                        } else {
+                            navController.navigate(DiscussionRoute)
                         }
                     } else {
-                        navController.navigate(DiscussionRoute)
+                        // El host hace avanzar a todos a la discusión
+                        if (gameState.soyHost) viewModel.hostContinuarDia()
                     }
                 }
             )
@@ -347,42 +453,57 @@ fun AppNavigation(
         composable<DiscussionRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
             DiscussionScreen(
                 players = activePlayers,
-                dayNumber = dayNumber,
-                onProceedToVoting = { navController.navigate(VotingRoute) }
+                dayNumber = if (gameMode == GameMode.ONLINE) gameState.numeroDia else dayNumber,
+                onProceedToVoting = {
+                    if (gameMode == GameMode.LOCAL) {
+                        navController.navigate(VotingRoute)
+                    } else {
+                        if (gameState.soyHost) viewModel.hostIniciarVotacion()
+                    }
+                }
             )
         }
 
         composable<VotingRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
             VotingScreen(
                 players = activePlayers,
-                dayNumber = dayNumber,
+                dayNumber = if (gameMode == GameMode.ONLINE) gameState.numeroDia else dayNumber,
                 eliminatedNight = gameState.lastEliminated?.name,
                 onConfirmVote = { voted ->
-                    dayEliminatedPlayer = voted
-                    if (voted != null) {
-                        viewModel.registrarVotacionDia(voted.name)
+                    if (gameMode == GameMode.LOCAL) {
+                        dayEliminatedPlayer = voted
+                        if (voted != null) {
+                            viewModel.registrarVotacionDia(voted.name)
+                        }
+                        navController.navigate(VerdictRoute)
+                    } else {
+                        // Envía el voto; el servidor resuelve cuando todos votan
+                        viewModel.enviarVotoOnline(voted?.name)
                     }
-                    navController.navigate(VerdictRoute)
                 }
             )
         }
 
-        //VerdictRoute usa gameState.winner en vez de calcular localmente
         composable<VerdictRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
             val isGameOver = gameState.winner != BandoGanador.NINGUNO
             val townsfolkWon = gameState.winner == BandoGanador.BUENOS
+            val eliminado = if (gameMode == GameMode.LOCAL) dayEliminatedPlayer else gameState.lastEliminated
 
             VerdictScreen(
-                eliminatedPlayer = dayEliminatedPlayer,
+                eliminatedPlayer = eliminado,
                 allPlayers = gameState.players,
-                dayNumber = dayNumber,
+                dayNumber = if (gameMode == GameMode.ONLINE) gameState.numeroDia else dayNumber,
                 isGameOver = isGameOver,
                 townsfolkWon = townsfolkWon,
                 onNextNight = {
-                    dayNumber += 1
-                    seerTarget = null
-                    dayEliminatedPlayer = null
-                    navController.navigate(VillagerSleepRoute)
+                    if (gameMode == GameMode.LOCAL) {
+                        dayNumber += 1
+                        seerTarget = null
+                        dayEliminatedPlayer = null
+                        navController.navigate(VillagerSleepRoute)
+                    } else {
+                        if (gameState.soyHost) viewModel.hostSiguienteNoche()
+                    }
                 },
                 onNewGame = {
                     viewModel.limpiarPartida()
@@ -392,7 +513,7 @@ fun AppNavigation(
                     dayNumber = 1
                     seerTarget = null
                     dayEliminatedPlayer = null
-                    navController.navigate(ConfigurationScreenRoute) {
+                    navController.navigate(ModeSelectionRoute) {
                         popUpTo(navController.graph.startDestinationId) { inclusive = true }
                     }
                 }
@@ -401,7 +522,7 @@ fun AppNavigation(
     }
 }
 
-//pantalla de transición nocturna
+//pantalla de transición nocturna (modo LOCAL — pasar el teléfono)
 // emoji y color neutros para que nadie pueda deducir el rol por la pantalla.
 @Composable
 private fun NightRoleTransitionScreen(
