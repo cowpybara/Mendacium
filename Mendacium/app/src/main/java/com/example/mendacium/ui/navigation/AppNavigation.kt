@@ -40,6 +40,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.example.mendacium.model.GameConfiguration
 import com.example.mendacium.model.Player
 import com.example.mendacium.model.Role
@@ -213,7 +214,20 @@ fun AppNavigation(
         composable<VillagerSleepRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
             VillagerSleepScreen(
                 dayNumber = dayNumber,
-                onStartNight = { navController.navigate(ImpostorNightRoute) }
+                onStartNight = {
+                    val impostor = activePlayers.firstOrNull { it.isAlive && it.role == Role.Impostor }
+                        ?: activePlayers.first { it.role == Role.Impostor }
+                    navController.navigate(ImpostorTransitionRoute(impostor.name))
+                }
+            )
+        }
+
+        //transicion nocturna
+        composable<ImpostorTransitionRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) { backStackEntry ->
+            val route = backStackEntry.toRoute<ImpostorTransitionRoute>()
+            NightRoleTransitionScreen(
+                playerName = route.playerName,
+                onContinue = { navController.navigate(ImpostorNightRoute) }
             )
         }
 
@@ -233,13 +247,13 @@ fun AppNavigation(
 
                     val doctor = activePlayers.firstOrNull { it.isAlive && it.role == Role.Doctor }
                     if (doctor != null) {
-                        // FIX 2: Pantalla de transición antes de mostrar la acción del Médico
-                        navController.navigate(DoctorTransitionRoute)
+                        // transición con el NOMBRE del jugador, no el rol
+                        navController.navigate(DoctorTransitionRoute(doctor.name))
                     } else {
                         viewModel.registrarAccionMedico(null)
                         val seer = activePlayers.firstOrNull { it.isAlive && it.role == Role.Vidente }
                         if (seer != null) {
-                            navController.navigate(SeerTransitionRoute)
+                            navController.navigate(SeerTransitionRoute(seer.name))
                         } else {
                             viewModel.registrarAccionVidente(null)
                             navController.navigate(NightSummaryRoute)
@@ -249,14 +263,11 @@ fun AppNavigation(
             )
         }
 
-        // FIX 2: Pantalla "Pasa el teléfono al Médico"
-        composable<DoctorTransitionRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
+        //transición nocturna
+        composable<DoctorTransitionRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) { backStackEntry ->
+            val route = backStackEntry.toRoute<DoctorTransitionRoute>()
             NightRoleTransitionScreen(
-                emoji = "💊",
-                roleTitle = "MÉDICO",
-                instruction = "El Médico debe tomar el teléfono.\nLos demás, cierren los ojos.",
-                buttonText = "ESTOY LISTO",
-                accentColor = Color(0xFF4ADE80),
+                playerName = route.playerName,
                 onContinue = { navController.navigate(DoctorNightRoute) }
             )
         }
@@ -269,8 +280,8 @@ fun AppNavigation(
 
                     val seer = activePlayers.firstOrNull { it.isAlive && it.role == Role.Vidente }
                     if (seer != null) {
-                        // FIX 2: Pantalla de transición antes de mostrar la acción de la Vidente
-                        navController.navigate(SeerTransitionRoute)
+                        // transición con el NOMBRE del jugador, no el rol
+                        navController.navigate(SeerTransitionRoute(seer.name))
                     } else {
                         viewModel.registrarAccionVidente(null)
                         navController.navigate(NightSummaryRoute)
@@ -279,14 +290,11 @@ fun AppNavigation(
             )
         }
 
-        // FIX 2: Pantalla "Pasa el teléfono a la Vidente"
-        composable<SeerTransitionRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
+        //transicion nocturna
+        composable<SeerTransitionRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) { backStackEntry ->
+            val route = backStackEntry.toRoute<SeerTransitionRoute>()
             NightRoleTransitionScreen(
-                emoji = "🔮",
-                roleTitle = "VIDENTE",
-                instruction = "La Vidente debe tomar el teléfono.\nLos demás, cierren los ojos.",
-                buttonText = "ESTOY LISTA",
-                accentColor = Color(0xFFD8B4FE),
+                playerName = route.playerName,
                 onContinue = { navController.navigate(SeerNightRoute) }
             )
         }
@@ -318,13 +326,12 @@ fun AppNavigation(
             }
         }
 
-        // FIX 1: NightSummary verifica si el juego terminó antes de navegar
         composable<NightSummaryRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
             NightSummaryScreen(
                 eliminatedPlayerName = gameState.lastEliminated?.name,
                 survivors = gameState.players,
+                isGameOver = gameState.winner != BandoGanador.NINGUNO,
                 onContinue = {
-                    // FIX 1: Si ya hay ganador (la noche fue decisiva), ir directo al veredicto
                     if (gameState.winner != BandoGanador.NINGUNO) {
                         navController.navigate(VerdictRoute) {
                             popUpTo(NightSummaryRoute) { inclusive = true }
@@ -336,7 +343,7 @@ fun AppNavigation(
             )
         }
 
-        // ── FASE DE DÍA ──────────────────────────────────────────────────────
+        //fase de dia
         composable<DiscussionRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
             DiscussionScreen(
                 players = activePlayers,
@@ -360,7 +367,7 @@ fun AppNavigation(
             )
         }
 
-        // FIX 3: VerdictRoute usa gameState.winner en vez de calcular localmente
+        //VerdictRoute usa gameState.winner en vez de calcular localmente
         composable<VerdictRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
             val isGameOver = gameState.winner != BandoGanador.NINGUNO
             val townsfolkWon = gameState.winner == BandoGanador.BUENOS
@@ -394,14 +401,11 @@ fun AppNavigation(
     }
 }
 
-// ── Pantalla de transición nocturna (usada entre roles) ────────────────────────
+//pantalla de transición nocturna
+// emoji y color neutros para que nadie pueda deducir el rol por la pantalla.
 @Composable
 private fun NightRoleTransitionScreen(
-    emoji: String,
-    roleTitle: String,
-    instruction: String,
-    buttonText: String,
-    accentColor: Color,
+    playerName: String,
     onContinue: () -> Unit
 ) {
     Column(
@@ -413,8 +417,8 @@ private fun NightRoleTransitionScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "PASA EL TELÉFONO",
-            color = accentColor,
+            text = "PASA EL TELEFONO",
+            color = PurpleAccent,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 2.sp
@@ -425,17 +429,17 @@ private fun NightRoleTransitionScreen(
         Box(
             modifier = Modifier
                 .size(110.dp)
-                .background(accentColor.copy(alpha = 0.12f), CircleShape),
+                .background(PurpleAccent.copy(alpha = 0.10f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Text(text = emoji, fontSize = 52.sp)
+            Text(text = "🌙", fontSize = 52.sp)
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = roleTitle,
-            color = accentColor,
+            text = playerName,
+            color = Color.White,
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             fontStyle = FontStyle.Italic
@@ -444,7 +448,7 @@ private fun NightRoleTransitionScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = instruction,
+            text = "Los demás, cierren los ojos.",
             color = OnBackgroundMuted,
             fontSize = 14.sp,
             textAlign = TextAlign.Center,
@@ -458,20 +462,20 @@ private fun NightRoleTransitionScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = accentColor),
+            colors = ButtonDefaults.buttonColors(containerColor = PurpleAccent),
             shape = RoundedCornerShape(12.dp)
         ) {
             Text(
-                text = buttonText,
-                color = Color(0xFF0D0B14),
+                text = "SOY $playerName, CONTINUAR",
+                color = Color.White,
                 fontWeight = FontWeight.Bold,
-                fontSize = 15.sp
+                fontSize = 14.sp
             )
         }
     }
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+
 private fun buildLobbyPlayers(totalPlayers: Int, hostName: String = "Jugador 1"): List<Player> {
     return List(totalPlayers) { index ->
         val playerNumber = index + 1

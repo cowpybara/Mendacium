@@ -149,10 +149,8 @@ class GameViewModel : ViewModel() {
 
     fun registrarVotacionDia(linchadoName: String) {
         _uiState.update { currentState ->
-            val updatedPlayers = currentState.players.map {
-                if (it.name == linchadoName) it.copy(isAlive = false) else it
-            }
-
+            val linchado = currentState.players.find { it.name == linchadoName }
+            val updatedPlayers = MotorResolucion.resolverLinchamiento(currentState.players, linchado)
             val currentWinner = MotorResolucion.evaluarVictoria(updatedPlayers)
 
             currentState.copy(

@@ -50,6 +50,7 @@ import com.example.mendacium.ui.theme.playerAvatarColor
 fun NightSummaryScreen(
     eliminatedPlayerName: String?,
     survivors: List<Player> = emptyList(),
+    isGameOver: Boolean = false,
     onContinue: () -> Unit
 ) {
     val wasEliminated = eliminatedPlayerName != null
@@ -169,7 +170,11 @@ fun NightSummaryScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = PurpleAccent),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("ABRIR DISCUSIÓN", color = Color.White, fontWeight = FontWeight.Bold)
+                Text(
+                    if (isGameOver) "VER RESULTADO FINAL" else "ABRIR DISCUSIÓN",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
             }
 
             Spacer(modifier = Modifier.height(20.dp))

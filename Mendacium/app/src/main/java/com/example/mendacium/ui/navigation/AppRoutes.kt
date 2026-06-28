@@ -30,12 +30,15 @@ object VillagerSleepRoute
 @Serializable
 object ImpostorNightRoute
 
-//pantallas de transición nocturna (pasan el telefono entre roles sin revelar quien es quien)
+//pantallas de transición nocturna — muestran el NOMBRE del jugador, no su rol
 @Serializable
-object DoctorTransitionRoute
+data class ImpostorTransitionRoute(val playerName: String)
 
 @Serializable
-object SeerTransitionRoute
+data class DoctorTransitionRoute(val playerName: String)
+
+@Serializable
+data class SeerTransitionRoute(val playerName: String)
 
 @Serializable
 object DoctorNightRoute
