@@ -57,6 +57,7 @@ fun VotingScreen(
     val alivePlayers = remember(players) { players.filter { it.isAlive } }
     var votedPlayer by remember { mutableStateOf<Player?>(null) }
     var abstained by remember { mutableStateOf(false) }
+    var yaConfirme by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = DarkBackground,
@@ -122,41 +123,62 @@ fun VotingScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            TextButton(
-                onClick = {
-                    abstained = true
-                    votedPlayer = null
-                },
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            ) {
+            if (yaConfirme) {
+                // En línea: tras votar se espera a que voten los demás jugadores
                 Text(
-                    text = if (abstained) "✓ ABSTENIÉNDOSE" else "× ABSTENERSE",
-                    color = if (abstained) PurpleAccent else OnBackgroundMuted,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Button(
-                onClick = { onConfirmVote(if (abstained) null else votedPlayer) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = PurpleAccent,
-                    disabledContainerColor = PurpleAccent.copy(alpha = 0.3f)
-                ),
-                shape = RoundedCornerShape(12.dp),
-                enabled = votedPlayer != null || abstained
-            ) {
-                Text(
-                    "CONFIRMAR RESULTADO",
-                    color = Color.White,
+                    text = "✓ Voto registrado",
+                    color = PurpleAccent,
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Esperando a que voten los demás...",
+                    color = OnBackgroundMuted,
+                    fontSize = 13.sp,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+            } else {
+                TextButton(
+                    onClick = {
+                        abstained = true
+                        votedPlayer = null
+                    },
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                ) {
+                    Text(
+                        text = if (abstained) "✓ ABSTENIÉNDOSE" else "× ABSTENERSE",
+                        color = if (abstained) PurpleAccent else OnBackgroundMuted,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(
+                    onClick = {
+                        yaConfirme = true
+                        onConfirmVote(if (abstained) null else votedPlayer)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PurpleAccent,
+                        disabledContainerColor = PurpleAccent.copy(alpha = 0.3f)
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = votedPlayer != null || abstained
+                ) {
+                    Text(
+                        "CONFIRMAR RESULTADO",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))

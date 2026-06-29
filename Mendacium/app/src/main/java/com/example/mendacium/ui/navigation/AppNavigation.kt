@@ -203,6 +203,7 @@ fun AppNavigation(
                 players = displayPlayers,
                 roomCode = if (gameMode == GameMode.ONLINE) codigoSala else null,
                 showStartButton = gameMode == GameMode.LOCAL || gameState.soyHost,
+                minPlayersToStart = 4,
                 onBack = {
                     preGamePlayers = emptyList()
                     viewModel.limpiarPartida()

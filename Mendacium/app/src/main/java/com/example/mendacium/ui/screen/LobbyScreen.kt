@@ -47,6 +47,7 @@ fun LobbyScreen(
     players: List<Player>,
     roomCode: String? = null,
     showStartButton: Boolean = true,
+    minPlayersToStart: Int = 1,
     onBack: () -> Unit,
     onStartGame: () -> Unit
 ) {
@@ -124,6 +125,16 @@ fun LobbyScreen(
             }
             Spacer(modifier = Modifier.height(16.dp))
             if (showStartButton) {
+                val suficientes = players.size >= minPlayersToStart
+                if (!suficientes) {
+                    Text(
+                        text = "Se necesitan al menos $minPlayersToStart jugadores para iniciar",
+                        color = PurpleAccent,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
                 Button(
                     onClick = onStartGame,
                     modifier = Modifier
@@ -131,7 +142,7 @@ fun LobbyScreen(
                         .height(56.dp),
                     colors = ButtonDefaults.buttonColors(PurpleAccent),
                     shape = RoundedCornerShape(12.dp),
-                    enabled = players.isNotEmpty()
+                    enabled = suficientes
                 ) {
                     Icon(
                         Icons.Default.PlayArrow,

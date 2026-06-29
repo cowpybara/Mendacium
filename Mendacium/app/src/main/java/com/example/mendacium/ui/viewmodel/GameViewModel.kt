@@ -95,6 +95,7 @@ class GameViewModel : ViewModel() {
     }
 
     fun unirseASala(codigo: String, nombre: String, onExito: () -> Unit) {
+        if (_networkState.value.cargando) return // evita dobles toques mientras carga
         viewModelScope.launch {
             _networkState.value = NetworkState(cargando = true)
             when (val result = repository.unirseASala(codigo, nombre)) {
@@ -191,7 +192,14 @@ class GameViewModel : ViewModel() {
                         val rev = p.rolesRevelados.find { it.nombre == pl.name }
                         if (rev != null) pl.copy(role = rolDesdeString(rev.rol)) else pl
                     }
-                    st.copy(players = conRoles, winner = ganador, currentPhase = GamePhase.GAME_OVER)
+                    // Refresca el rol del eliminado con el rol real revelado (no el placeholder)
+                    val elimActualizado = st.lastEliminated?.let { le -> conRoles.find { it.name == le.name } }
+                    st.copy(
+                        players = conRoles,
+                        lastEliminated = elimActualizado,
+                        winner = ganador,
+                        currentPhase = GamePhase.GAME_OVER
+                    )
                 }
             }
         }
