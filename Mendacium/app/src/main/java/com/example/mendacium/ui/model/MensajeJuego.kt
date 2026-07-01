@@ -9,7 +9,7 @@ data class MensajeJuego(
     val payload: JsonElement?
 )
 
-// ─────────── Payloads tipados (se parsean con Gson desde MensajeJuego.payload) ───────────
+// Payloads tipados
 
 data class PayloadPartidaIniciada(
     val rol: String,

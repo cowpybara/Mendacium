@@ -12,7 +12,7 @@ sealed class Role(
     val color: Color,
     val faction: String
 ) {
-    // Aquí está el polimorfismo: cada rol DEBE decir cómo actúa de noche.
+    // Cada rol dece cómo actúa de noche
     abstract fun realizarAccion(objetivo: Player? = null): ResultadoAccion
 
     object Vidente : Role(

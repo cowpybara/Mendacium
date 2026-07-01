@@ -53,7 +53,7 @@ data class GameState(
     val seerInvestigated: String? = null,
     val lastEliminated: Player? = null,
     val winner: BandoGanador = BandoGanador.NINGUNO,
-    // ─── Campos del modo en línea (el modo local los ignora) ───
+    // Campos del modo en línea (el modo local los ignora)
     val miRol: Role = Role.Aldeano,
     val miNombre: String = "",
     val soyHost: Boolean = false,
@@ -76,7 +76,7 @@ class GameViewModel : ViewModel() {
 
     private var wsCodigo: String? = null
 
-    // ───────────────────────────── REST (lobby) ─────────────────────────────
+    // REST (lobby)
 
     fun crearSala(hostNombre: String, onExito: (codigo: String) -> Unit) {
         viewModelScope.launch {
@@ -124,7 +124,7 @@ class GameViewModel : ViewModel() {
         _networkState.update { it.copy(error = null) }
     }
 
-    // ───────────────────────────── WebSocket (modo en línea) ─────────────────────────────
+    // WebSocket (modo en línea)
 
     fun iniciarConexionWebSocket(codigo: String, nombre: String) {
         wsCodigo = codigo
@@ -314,7 +314,7 @@ class GameViewModel : ViewModel() {
             )
         }
 
-    // ───────────────────────────── Modo LOCAL (sin cambios) ─────────────────────────────
+    // Modo LOCAL
 
     fun iniciarPartida(initialPlayers: List<Player>) {
         _uiState.update { currentState ->

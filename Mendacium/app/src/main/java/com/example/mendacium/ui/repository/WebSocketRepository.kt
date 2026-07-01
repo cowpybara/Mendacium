@@ -41,7 +41,7 @@ class WebSocketRepository {
         }
     }
 
-    // ─────────── Envíos al servidor ───────────
+    // Envíos al servidor
 
     suspend fun iniciarPartida(codigo: String, impostorCount: Int, doctorCount: Int, seerCount: Int) {
         enviar("/app/sala/$codigo/iniciar", mapOf(
