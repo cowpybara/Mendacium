@@ -50,6 +50,7 @@ import com.example.mendacium.ui.screen.DoctorNightScreen
 import com.example.mendacium.ui.screen.ImpostorNightScreen
 import com.example.mendacium.ui.screen.JoinWithCodeScreen
 import com.example.mendacium.ui.screen.LobbyScreen
+import com.example.mendacium.ui.screen.LocalPlayerNamesScreen
 import com.example.mendacium.ui.screen.ModeSelectionScreen
 import com.example.mendacium.ui.screen.NameEntryScreen
 import com.example.mendacium.ui.screen.NightSummaryScreen
@@ -90,7 +91,6 @@ fun AppNavigation(
 
     val activePlayers = if (gameState.players.isNotEmpty()) gameState.players else preGamePlayers
 
-    // ─── Navegación reactiva: SOLO en modo en línea, dirigida por el servidor ───
     LaunchedEffect(gameState.currentPhase, gameMode) {
         if (gameMode != GameMode.ONLINE) return@LaunchedEffect
         when (gameState.currentPhase) {
@@ -163,8 +163,33 @@ fun AppNavigation(
             ConfigurationScreen(
                 onNavigateToLobby = { config ->
                     gameConfiguration = config
+
                     if (gameMode == GameMode.LOCAL) {
-                        preGamePlayers = buildLobbyPlayers(config.totalPlayers, hostPlayerName)
+                        navController.navigate(LocalPlayerNamesRoute(config.totalPlayers, hostPlayerName))
+                    } else {
+                        currentRevealIndex = 0
+                        navController.navigate(LobbyScreenRoute)
+                    }
+                }
+            )
+        }
+
+        //nobres en local
+        composable<LocalPlayerNamesRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) { backStackEntry ->
+            val route = backStackEntry.toRoute<LocalPlayerNamesRoute>()
+
+            LocalPlayerNamesScreen(
+                totalPlayers = route.totalPlayers,
+                hostName = route.hostName,
+                onContinuar = { listaDeNombres ->
+                    preGamePlayers = listaDeNombres.mapIndexed { index, nombre ->
+                        Player(
+                            name = nombre,
+                            levelAndStatus = if (index == 0) "ANFITRIÓN · LISTO" else "LISTO",
+                            isHost = index == 0,
+                            iconType = if (index == 0) IconType.ESTRELLA else IconType.LISTO,
+                            avatarColorIndex = index % 12
+                        )
                     }
                     currentRevealIndex = 0
                     navController.navigate(LobbyScreenRoute)
@@ -177,7 +202,6 @@ fun AppNavigation(
             val codigoSala = networkState.sala?.codigo
 
             if (gameMode == GameMode.ONLINE) {
-                // Conecta el WebSocket (reemplaza el polling) cuando ya hay código
                 LaunchedEffect(codigoSala) {
                     if (codigoSala != null) {
                         viewModel.iniciarConexionWebSocket(codigoSala, gameState.miNombre)
@@ -216,8 +240,6 @@ fun AppNavigation(
                         currentRevealIndex = 0
                         navController.navigate(PassDeviceScreenRoute)
                     } else {
-                        // El host envía la configuración; el servidor reparte los roles
-                        // y la navegación reactiva lleva a cada quien a su pantalla.
                         viewModel.hostIniciarPartida(
                             gameConfiguration.impostorCount,
                             gameConfiguration.doctorCount,
@@ -267,7 +289,7 @@ fun AppNavigation(
             }
         }
 
-        //fase de noche (LOCAL)
+        //fase de noche local
         composable<VillagerSleepRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
             VillagerSleepScreen(
                 dayNumber = dayNumber,
@@ -279,7 +301,7 @@ fun AppNavigation(
             )
         }
 
-        //transiciones nocturnas (LOCAL)
+        //transiciones nocturnas locval
         composable<ImpostorTransitionRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) { backStackEntry ->
             val route = backStackEntry.toRoute<ImpostorTransitionRoute>()
             NightRoleTransitionScreen(
@@ -319,7 +341,6 @@ fun AppNavigation(
                     }
                 )
             } else {
-                // ONLINE: solo el impostor ve esta pantalla; envía su ataque por WebSocket
                 val excluidos = (gameState.aliados + gameState.miNombre).toSet()
                 val etiqueta = if (gameState.aliados.isEmpty()) gameState.miNombre else "Los impostores"
                 ImpostorNightScreen(
@@ -423,7 +444,7 @@ fun AppNavigation(
             }
         }
 
-        //online: pantalla de espera nocturna
+        //pantalla de espera nocturna online
         composable<WaitingNightRoute>(enterTransition = { fadeIn() }, exitTransition = { fadeOut() }) {
             WaitingNightScreen()
         }
@@ -443,7 +464,6 @@ fun AppNavigation(
                             navController.navigate(DiscussionRoute)
                         }
                     } else {
-                        // El host hace avanzar a todos a la discusión
                         if (gameState.soyHost) viewModel.hostContinuarDia()
                     }
                 }
@@ -478,7 +498,6 @@ fun AppNavigation(
                         }
                         navController.navigate(VerdictRoute)
                     } else {
-                        // Envía el voto; el servidor resuelve cuando todos votan
                         viewModel.enviarVotoOnline(voted?.name)
                     }
                 }
@@ -523,8 +542,7 @@ fun AppNavigation(
     }
 }
 
-//pantalla de transición nocturna (modo LOCAL — pasar el teléfono)
-// emoji y color neutros para que nadie pueda deducir el rol por la pantalla.
+//pantalla de transicion nocturna local
 @Composable
 private fun NightRoleTransitionScreen(
     playerName: String,
@@ -570,7 +588,7 @@ private fun NightRoleTransitionScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "Los demás, cierren los ojos.",
+            text = "Los demas, cierren los ojos.",
             color = OnBackgroundMuted,
             fontSize = 14.sp,
             textAlign = TextAlign.Center,
@@ -594,20 +612,6 @@ private fun NightRoleTransitionScreen(
                 fontSize = 14.sp
             )
         }
-    }
-}
-
-
-private fun buildLobbyPlayers(totalPlayers: Int, hostName: String = "Jugador 1"): List<Player> {
-    return List(totalPlayers) { index ->
-        val playerNumber = index + 1
-        Player(
-            name = if (index == 0) hostName else "Jugador $playerNumber",
-            levelAndStatus = if (index == 0) "ANFITRIÓN · LISTO" else "LISTO",
-            isHost = index == 0,
-            iconType = if (index == 0) IconType.ESTRELLA else IconType.LISTO,
-            avatarColorIndex = index
-        )
     }
 }
 

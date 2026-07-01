@@ -17,6 +17,10 @@ object JoinWithCodeScreenRoute
 @Serializable
 object ConfigurationScreenRoute
 
+//pedir nombres locales
+@Serializable
+data class LocalPlayerNamesRoute(val totalPlayers: Int, val hostName: String)
+
 @Serializable
 object LobbyScreenRoute
 
@@ -33,7 +37,7 @@ object VillagerSleepRoute
 @Serializable
 object ImpostorNightRoute
 
-//pantallas de transición nocturna — muestran el NOMBRE del jugador, no su rol
+//pantallas de transición nocturna
 @Serializable
 data class ImpostorTransitionRoute(val playerName: String)
 
@@ -49,7 +53,7 @@ object DoctorNightRoute
 @Serializable
 object SeerNightRoute
 
-// modo en línea: pantalla de espera nocturna (aldeanos y roles que ya actuaron)
+//modo en linea: pantalla de espera nocturna (aldeanos y roles que ya actuaron)
 @Serializable
 object WaitingNightRoute
 
